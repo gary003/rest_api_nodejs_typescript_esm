@@ -1,0 +1,195 @@
+services:
+  app:
+    build: .
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+        labels: 'service'
+    labels:
+      service: 'wallet-api'
+    ports:
+      - '${API_PORT:-8080}:${API_PORT:-8080}'
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DB_DRIVER=${DB_DRIVER:-mysql}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_USERNAME=${DB_USERNAME:-mysql}
+      - DB_PASSWORD=${DB_PASSWORD:-mypass}
+      - DB_DATABASE_NAME=${DB_DATABASE_NAME:-mydb}
+      - DB_PORT=${DB_PORT:-3306}
+      - OTEL_TRACE_EXPORTER_ENDPOINT=${OTEL_TRACE_EXPORTER_ENDPOINT:-http://otel-collector:4318/v1/traces }
+      - OTEL_METRIC_EXPORTER_ENDPOINT=${OTEL_METRIC_EXPORTER_ENDPOINT:-http://otel-collector:4318/v1/metrics}
+      - CRYPTO_SECRET_KEY=${CRYPTO_SECRET_KEY:-4876he526d9148b7ac40bd623b240753}
+      - API_PORT=${API_PORT:-8080}
+      - LOGLEVEL=${LOGLEVEL:-debug}
+    restart: always
+    networks:
+      - my_app_network
+      - my_db_network
+
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-StrongRootPassword123!}
+      - MYSQL_USER=${DB_USERNAME:-mysql}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-mypass}
+      - MYSQL_DATABASE=${DB_DATABASE_NAME:-mydb}
+    volumes:
+      - ./src/v1/infrastructure/persistence/database/db_volume:/var/lib/mysql
+      - ./src/v1/infrastructure/persistence/database/db_scripts/:/docker-entrypoint-initdb.d/
+    ports:
+      - '${DB_PORT:-3306}:${DB_PORT:-3306}'
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      timeout: 20s
+      retries: 10
+    networks:
+      - my_db_network
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    networks:
+      - my_db_network
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command:
+      - '--config=/etc/otel-config.yaml'
+    volumes:
+      - ./src/v1/infrastructure/observability/otel-collector-config.yaml:/etc/otel-config.yaml
+    ports:
+      - '4317:4317' # OTLP gRPC (host:container)
+      - '4318:4318' # OTLP HTTP (host:container)
+      - '13133:13133' # health_check
+      - '8889:8889' # Prometheus metrics
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:13133/livez']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # depends_on:
+    #   - loki
+    networks:
+      - my_app_network
+      - my_observability_network
+
+  promtail:
+    image: grafana/promtail:2.9.4
+    ports:
+      - '9080:9080'
+    command:
+      - '--config.file=/etc/promtail/config.yaml'
+      - '--log.level=warn'
+    volumes:
+      - ./src/v1/infrastructure/observability/promtail-config.yaml:/etc/promtail/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - my_app_network
+      - my_observability_network
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - '3100:3100'
+    command:
+      - '--config.file=/etc/loki/local-config.yaml'
+      - '--log.level=warn'
+    volumes:
+      - ./src/v1/infrastructure/observability/loki-config.yaml:/etc/loki/local-config.yaml
+    healthcheck:
+      test: ['CMD', 'wget', '--no-verbose', '--spider', 'http://localhost:3100/ready']
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks:
+      - my_observability_network
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-remote-write-receiver'
+      - --enable-feature=native-histograms
+      - '--log.level=warn'
+    volumes:
+      - ./src/v1/infrastructure/observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - '9090:9090'
+    networks:
+      - my_observability_network
+
+  tempo:
+    image: grafana/tempo:latest
+    command:
+      - '--config.file=/etc/tempo.yaml'
+      - '--log.level=warn'
+    ports:
+      - '3200' # Tempo HTTP API
+      - '4317' # OTLP gRPC (internal only)
+    volumes:
+      - ./src/v1/infrastructure/observability/tempo.yaml:/etc/tempo.yaml
+      - tempo_data:/var/tempo
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3200/status']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - my_observability_network
+
+  grafana:
+    image: grafana/grafana:latest
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    volumes:
+      - grafana_data:/var/lib/grafana
+      # Mount provisioning datasources
+      - ./src/v1/infrastructure/observability/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+    environment:
+      # Less chatty log at startup
+      - GF_LOG_LEVEL=warn
+      - GF_LOG_MODE=console
+      # Enable anonymous access (Admin role, no login form)
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_LOG_FILTERS=authn.service:critical
+      # Enable TraceQL editor
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+      # Install required plugins
+      - GF_INSTALL_PLUGINS=grafana-exploretraces-app
+      # Optional: allow provisioning overwrite (helpful in dev)
+      - GF_PROVISIONING_ALLOW_OVERWRITE=true
+    ports:
+      - '3000:3000'
+    networks:
+      - my_observability_network
+
+networks:
+  my_app_network:
+    driver: bridge
+  my_db_network:
+    driver: bridge
+  my_observability_network:
+    driver: bridge
+
+volumes:
+  grafana_data:
+  tempo_data:

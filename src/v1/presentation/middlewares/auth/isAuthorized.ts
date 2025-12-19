@@ -1,0 +1,41 @@
+import { NextFunction, Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
+import logger from '../../../helpers/logger/index.js'
+// import { loggedUser } from '../../../domain/dto/loggedUser.dto'
+
+export const isAuthorized = (req: Request, res: Response, next: NextFunction) => {
+  const token = req.headers['authorization']?.split(' ').at(1)
+
+  if (!token) {
+    return res.status(401).json({ message: 'presentation:middleware:isAuthorized, failed to get a valid token' })
+  }
+
+  try {
+    const userFromToken = jwt.verify(token, process.env.JWT_SECRET_KEY || 'secret')
+
+    // logger.debug(JSON.stringify(userFromToken))
+
+    req.body.user = userFromToken
+
+    return next()
+  } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      logger.info(`presentation:middleware:isAuthorized - Token expired at ${error.expiredAt}`)
+      return res.status(401).json({
+        message: 'presentation:middleware:isAuthorized - Token expired',
+        expiredAt: error.expiredAt
+      })
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      logger.info(`presentation:middleware:isAuthorized - Invalid token - ${error.message}`)
+      return res.status(401).json({
+        message: 'presentation:middleware:isAuthorized - Invalid token',
+        error: error.message
+      })
+    }
+
+    logger.error(`presentation:middleware:isAuthorized: Unexpected error - ${error}`)
+    return res.status(401).json({ message: 'presentation:middleware:isAuthorized - Authentication failed' })
+  }
+}

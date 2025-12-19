@@ -1,0 +1,189 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: 22
+  DOCKER_IMAGE: gary003/rest_api_nodejs_typescript_esm
+  DOCKER_TAG: latest
+
+jobs:
+  # security-scan:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     # Static Analysis - Trivy
+  #     - name: Trivy filesystem scan
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         scan-type: 'fs'
+  #         scan-ref: '.'
+  #         format: 'sarif'
+  #         output: 'trivy-results.sarif'
+
+  #     # # Dependency Scanning - Snyk
+  #     # - name: Snyk dependency scan
+  #     #   uses: snyk/actions/node@master
+  #     #   env:
+  #     #     SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #     #   with:
+  #     #     args: --severity-threshold=medium --sarif-file-output=snyk.sarif
+
+  #     # Build Docker image
+  #     - name: Build Docker image
+  #       run: npm run docker:build:image
+
+  #     # Container Scanning - Trivy
+  #     - name: Trivy container scan
+  #       uses: aquasecurity/trivy-action@master
+  #       with:
+  #         image-ref: ''
+  #         format: 'sarif'
+  #         output: 'trivy-container.sarif'
+
+  #     # Start application for DAST
+  #     - name: Start application
+  #       run: |
+  #         docker run -d -p 3000:3000 --name test-app ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+  #         sleep 30
+
+  #     # Dynamic Analysis - OWASP ZAP
+  #     - name: OWASP ZAP scan
+  #       uses: zaproxy/action-baseline@v0.10.0
+  #       with:
+  #         target: 'http://localhost:3000'
+  #         rules_file_name: '.zap/rules.tsv'
+
+  #     # Upload all results to GitHub Security
+  #     - name: Upload Trivy results
+  #       uses: github/codeql-action/upload-sarif@v2
+  #       with:
+  #         sarif_file: 'trivy-results.sarif'
+
+  #     # - name: Upload Snyk results
+  #     #   uses: github/codeql-action/upload-sarif@v2
+  #     #   with:
+  #     #     sarif_file: 'snyk.sarif'
+
+  #     # Fail build on high severity vulnerabilities
+  #     - name: Check for high severity issues
+  #       run: |
+  #         if grep -q "HIGH\|CRITICAL" trivy-results.sarif; then
+  #           echo "High/Critical vulnerabilities found!"
+  #           exit 1
+  #         fi
+
+  test-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create .env file
+        run: |
+          echo "DB_DRIVER=mysql" >> .env
+          echo "DB_HOST=localhost" >> .env  # Matches the service name 'mysql'
+          echo "DB_PORT=3306" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=testpassword" >> .env  # Matches MYSQL_ROOT_PASSWORD
+          echo "DB_DATABASE_NAME=testdb" >> .env  # Matches MYSQL_DATABASE
+          echo "DB_URI=mysql://root:testpassword@localhost:3306/testdb" >> .env
+          echo "API_PORT=8080" >> .env
+          echo "LOGLEVEL=debug" >> .env
+          echo "NODE_ENV=test" >> .env
+          echo "SWAGGER_HOST=localhost:8080" >> .env
+          echo "SWAGGER_BASE_PATH=/api/v1" >> .env
+
+      - name: Run all tests
+        run: npm run test
+        env:
+          CI: true
+
+      - name: Upload test artifacts (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs
+          path: |
+            *.log
+            coverage/
+
+  docker-build-image:
+    runs-on: ubuntu-latest
+    needs: test-app
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: npm run docker:build:image
+
+      - name: Test Docker image
+        run: |
+          docker run --rm -d -p 8080:8080 --name test-container ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+          sleep 5  # Wait for container to start
+          curl --fail http://localhost:8080 || exit 1
+          docker stop test-container
+
+  deploy-dockerHub:
+    runs-on: ubuntu-latest
+    needs: docker-build-image
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+          logout: true
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
