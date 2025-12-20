@@ -1,6 +1,4 @@
-import chai from 'chai'
-import { expect } from 'chai'
-import { describe, it } from 'mocha'
+import { describe, it, beforeEach, beforeAll, afterAll, expect } from 'vitest'
 import app from '../../src/app'
 import { DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment, Wait } from 'testcontainers'
 import request from 'supertest'
@@ -38,16 +36,13 @@ describe('Integration tests - presentation:routes:user', () => {
 
   process.env = { ...process.env, ...test_env }
 
-  // This string will store the test database uri to fetch
-  let dbUriTest: string = ''
-
   // This is test user ids  use through all tests (as recipient and giver for money transfer tests)
   let testUserId1: string = ''
   let testUserId2: string = ''
 
   const urlBase: string = 'api/v1'
 
-  before(async () => {
+  beforeAll(async () => {
     const composeFilePath = '.'
     const composeFile = 'docker-compose.yaml'
 
@@ -62,25 +57,27 @@ describe('Integration tests - presentation:routes:user', () => {
     } catch (error) {
       const errorInfo = `Docker Compose environment setup failed - ${String(error)}`
       logger.error(errorInfo)
-      chai.assert.fail(errorInfo)
+      expect.fail(errorInfo)
     }
 
     const dbContainer = dockerComposeEnvironment.getContainer('db-1')
 
     const dbPort = Number(process.env.DB_PORT) || 3306
 
-    dbUriTest = `${process.env.DB_DRIVER}://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbContainer.getHost()}:${dbContainer.getMappedPort(dbPort)}/${process.env.DB_DATABASE_NAME}`
+    // Set DB connection params - use individual params instead of URI to avoid parsing issues
+    process.env.DB_HOST = dbContainer.getHost()
+    process.env.DB_PORT = String(dbContainer.getMappedPort(dbPort))
+  }, 100000)
 
-    process.env.DB_URI = dbUriTest
-  })
-
-  after(async () => {
-    await dockerComposeEnvironment.down()
+  afterAll(async () => {
+    if (dockerComposeEnvironment) {
+      await dockerComposeEnvironment.down()
+    }
 
     process.env = originalEnv
 
     sandbox.restore()
-  })
+  }, 100000)
 
   describe('src > v1 > presentation > routes > user > GET (getting all the users)', () => {
     beforeEach(() => {
@@ -109,7 +106,7 @@ describe('Integration tests - presentation:routes:user', () => {
     it('Should get all users from DB from a stream', async () => {
       const resp = await request(app).get(`/${urlBase}/user/stream`)
 
-      if (resp instanceof Error) chai.assert.fail('Error - Impossible to get the data stream from route')
+      if (resp instanceof Error) expect.fail('Error - Impossible to get the data stream from route')
 
       const users = resp.text.split('\n').slice(0, -1)
 

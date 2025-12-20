@@ -1,6 +1,8 @@
 import { DataSourceOptions, DataSource } from 'typeorm'
 import logger from '../../../../helpers/logger/index.js'
 import { v4 as uuidv4 } from 'uuid'
+import { Customer } from '../customer/entity.js'
+import { Wallet } from '../wallet/entity.js'
 
 /**
  * Generates connection options for the database based on environment variables.
@@ -16,7 +18,7 @@ const getConnectionOptions = async (): Promise<DataSourceOptions> => {
     username: process.env.DB_USERNAME, // Database username
     password: process.env.DB_PASSWORD, // Database password
     database: process.env.DB_DATABASE_NAME, // Database name
-    entities: [__dirname + '/../**/entity.*s'], // Path to entity files
+    entities: [Customer, Wallet], // Explicitly list entity classes
     synchronize: false, // Disable auto-sync
     poolSize: 10, // Max connections in the pool
     idleTimeout: 30000,
