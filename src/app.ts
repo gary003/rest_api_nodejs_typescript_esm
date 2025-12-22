@@ -5,12 +5,12 @@ import authRoute from './v1/presentation/routes/auth/index.js'
 
 import swaggerUi from 'swagger-ui-express'
 import apiDocumentation from './v1/helpers/apiDocumentation/v2/index.js'
-import openApiSpec from './v1/helpers/apiDocumentation/v3/index.ts'
+import openApiSpec from './v1/helpers/apiDocumentation/v3/index.js'
 
 import compression from 'compression'
 import helmet from 'helmet'
 import cors from 'cors'
-import logger from './v1/helpers/logger/index.ts'
+import logger from './v1/helpers/logger/index.js'
 
 import rateLimit from 'express-rate-limit'
 
@@ -40,7 +40,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 
 // Redirect root URL to /apiDocV3
 app.get('/', (req, res) => {
-  return res.status(300).redirect(`/${urlBase}/doc3/apiDocumentation`)
+  return res.status(302).redirect(`/${urlBase}/doc3/apiDocumentation`)
 })
 
 app.use(`/${urlBase}/auth`, authRoute)

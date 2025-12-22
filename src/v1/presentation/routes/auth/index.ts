@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 // import logger from '../../../helpers/logger'
 import jwt from 'jsonwebtoken'
-import logger from '../../../helpers/logger/index.ts'
+import logger from '../../../helpers/logger/index.js'
 import { isValidRefreshToken } from '../../middlewares/auth/isValidRefreshToken.js'
 import { storeRefreshToken } from '../../../services/auth/index.js'
 

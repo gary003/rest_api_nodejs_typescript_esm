@@ -129,7 +129,7 @@ services:
     volumes:
       - ./src/v1/infrastructure/observability/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - '9090:9090'
+      - '9091:9090'
     networks:
       - my_observability_network
 

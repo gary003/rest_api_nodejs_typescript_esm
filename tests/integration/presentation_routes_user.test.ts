@@ -66,10 +66,14 @@ describe('Integration tests - presentation:routes:user', () => {
 
     const dbPort = Number(process.env.DB_PORT) || 3306
 
-    // Set DB connection params - use individual params instead of URI to avoid parsing issues
-    process.env.DB_HOST = dbContainer.getHost()
+    const dbUriTest = `${process.env.DB_DRIVER}://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbContainer.getHost()}:${dbContainer.getMappedPort(dbPort)}/${process.env.DB_DATABASE_NAME}`
+
+    process.env.DB_URI = dbUriTest
+
+    // // Set DB connection params - use individual params instead of URI to avoid parsing issues
+    // process.env.DB_HOST = dbContainer.getHost()
     process.env.DB_PORT = String(dbContainer.getMappedPort(dbPort))
-  }, 100000)
+  }, 300000)
 
   afterAll(async () => {
     if (dockerComposeEnvironment) {
