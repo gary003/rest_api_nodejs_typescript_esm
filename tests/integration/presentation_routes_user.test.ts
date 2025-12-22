@@ -1,8 +1,7 @@
-import { describe, it, beforeEach, beforeAll, afterAll, expect } from 'vitest'
+import { describe, it, beforeAll, afterAll, expect, vi, beforeEach } from 'vitest'
 import app from '../../src/app'
 import { DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment, Wait } from 'testcontainers'
 import request from 'supertest'
-import { createSandbox, SinonSandbox } from 'sinon'
 import logger from '../../src/v1/helpers/logger/index.js'
 import { errorAPIUSER } from '../../src/v1/presentation/routes/user/error.dto.js'
 import { moneyTypesO } from '../../src/v1/domain/index.js'
@@ -12,8 +11,6 @@ const DB_READY_WAIT_MS = 30000
 
 describe('Integration tests - presentation:routes:user', () => {
   const originalEnv = { ...process.env }
-
-  const sandbox: SinonSandbox = createSandbox()
 
   // Dont accidentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
@@ -41,6 +38,11 @@ describe('Integration tests - presentation:routes:user', () => {
   let testUserId2: string = ''
 
   const urlBase: string = 'api/v1'
+  const loggerSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger)
+
+  beforeEach(() => {
+    loggerSpy.mockClear()
+  })
 
   beforeAll(async () => {
     const composeFilePath = '.'
@@ -75,15 +77,9 @@ describe('Integration tests - presentation:routes:user', () => {
     }
 
     process.env = originalEnv
-
-    sandbox.restore()
   }, 100000)
 
   describe('src > v1 > presentation > routes > user > GET (getting all the users)', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
-
     it('Should get all users from DB', async () => {
       const response = await request(app).get(`/${urlBase}/user/`).set('Accept', 'application/json')
 
@@ -99,10 +95,6 @@ describe('Integration tests - presentation:routes:user', () => {
   })
 
   describe('src > v1 > presentation > routes > user > stream > GET (getting all the users - stream)', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
-
     it('Should get all users from DB from a stream', async () => {
       const resp = await request(app).get(`/${urlBase}/user/stream`)
 
@@ -123,10 +115,6 @@ describe('Integration tests - presentation:routes:user', () => {
   })
 
   describe('src > v1 > presentation > routes > user > POST (adding a new user)', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
-
     it('should add a new user', async () => {
       const newUser = {
         firstname: 'test_Rosita',
@@ -151,9 +139,6 @@ describe('Integration tests - presentation:routes:user', () => {
   })
 
   describe('src > v1 > presentation > routes > user > GET (single user)', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
     it('should return a single user', async () => {
       const response = await request(app).get(`/${urlBase}/user/${testUserId1}`).set('Accept', 'application/json')
 
@@ -173,24 +158,17 @@ describe('Integration tests - presentation:routes:user', () => {
       expect(body).to.have.property('middlewareError')
     })
     it('should fail returning a single user ( user dont exists )', async () => {
-      const mockErrorLogger = sandbox.stub(logger, 'error')
-
       const wrongUserId = 'zz2c990b6-029c-11ed-b939-0242ac12002'
 
       const response = await request(app).get(`/${urlBase}/user/${wrongUserId}`).set('Accept', 'application/json')
 
       expect(response.statusCode).to.be.within(500, 599)
       expect(response.text).includes('Impossible to get any')
-
-      sandbox.assert.called(mockErrorLogger)
+      expect(loggerSpy).toHaveBeenCalled()
     })
   })
 
   describe('src > v1 > presentation > routes > user > POST (transfer)', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
-
     it('should successfully transfer money between users', async () => {
       const validTransferData = {
         senderId: testUserId2,
@@ -257,13 +235,23 @@ describe('Integration tests - presentation:routes:user', () => {
       expect(response.statusCode).to.be.within(400, 499)
       expect(body).to.deep.equal(errorAPIUSER.errorAPIUserTransferSelf!)
     })
+
+    it('should fail transferring money (non-existent sender)', async () => {
+      const invalidTransferData = {
+        senderId: 'zz2c990b6-029c-11ed-b939-0242ac12002',
+        receiverId: testUserId1,
+        amount: 10,
+        currency: moneyTypesO.hard_currency
+      }
+
+      const response = await request(app).post(`/${urlBase}/user/transfer`).send(invalidTransferData).set('Accept', 'application/json')
+
+      expect(response.statusCode).to.be.within(500, 599)
+      expect(loggerSpy).toHaveBeenCalled()
+    })
   })
 
   describe('src > v1 > presentation > routes > user > DELETE', () => {
-    beforeEach(() => {
-      sandbox.restore()
-    })
-
     it('should fail deleting a specified user (logged user is not an admin)', async () => {
       // Create an admin token for authentication
       const stdUser = {
