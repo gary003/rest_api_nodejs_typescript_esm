@@ -10,9 +10,10 @@ import jwt from 'jsonwebtoken'
 const DB_READY_WAIT_MS = 30000
 
 describe('Integration tests - presentation:routes:user', () => {
-  const originalEnv = { ...process.env }
+  const originalEnv = { ...process.env } as const  
 
-  // Dont accidentally fetch the real database (use the containerized test environment) !
+  // Dont acci
+  // dentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
 
@@ -68,10 +69,10 @@ describe('Integration tests - presentation:routes:user', () => {
 
     const dbUriTest = `${process.env.DB_DRIVER}://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbContainer.getHost()}:${dbContainer.getMappedPort(dbPort)}/${process.env.DB_DATABASE_NAME}`
 
-    process.env.DB_URI = dbUriTest
-
     // // Set DB connection params - use individual params instead of URI to avoid parsing issues
+    process.env.DB_URI = dbUriTest
     // process.env.DB_HOST = dbContainer.getHost()
+    
     process.env.DB_PORT = String(dbContainer.getMappedPort(dbPort))
   }, 300000)
 
