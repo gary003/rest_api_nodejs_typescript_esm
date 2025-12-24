@@ -1,10 +1,10 @@
-# REST API nodejs - typescript
+# REST API Node.js - TypeScript
 
 ## Skills
 
-- Languages: **Typescript**, Markdown, JSON
+- Languages: **Node.js v24**, **Typescript v5**, Markdown, JSON
 - **Clean architecture** (onion architecture)
-- CI/CD pipeline with **Github actions** && **Docker**
+- CI/CD pipeline with **GitHub Actions** && **Docker**
   - docker-compose.yaml
   - Dockerfile
   - Test, build docker images, deploy docker images to **DockerHub**
@@ -34,10 +34,12 @@
 
 ## Description
 
-This repository is a backend rest api portfolio that has a few routes (CRUD) aiming to keep at-hand backend development techniques and show off dev skills.
-To make things easier for github users, there in no need for a .env, easier to test and deploy for external users who want to try it.
+This repository is a backend REST API portfolio that has a few routes (CRUD) aiming to keep at hand backend development techniques and show off development skills.
+To make things easier for GitHub users, there is no need for a .env file, making it easier to test and deploy for external users who want to try it.
 
 ## Prerequisites
+
+- Having Node.js v24 installed (use nvm if needed)
 
 - Having git installed
 
@@ -45,34 +47,34 @@ To make things easier for github users, there in no need for a .env, easier to t
 
 - Having docker(v27+) installed
 
-  !! A docker group must be created, then your user(as a sudoer) musty be added to it.
+  !! A docker group must be created, then your user (as a sudoer) must be added to it.
   Otherwise you'll have trouble launching the tests !!
 
   Link to install and configure docker properly : <https://medium.com/devops-technical-notes-and-manuals/how-to-run-docker-commands-without-sudo-28019814198f>
 
-  Don't forgot to restart your computer or session for the changes to be available on all shells
+  Don't forget to restart your computer or session for the changes to be available on all shells
 
 ## Git Installation
 
 - Clone the project
 
-  `git clone https://github.com/gary003/rest_api_nodejs_typescript.git`
+  `git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git`
 
 - Go into the project directory
 
-  `cd rest_api_nodejs_typescript`
+  `cd rest_api_nodejs_typescript_esm`
 
-- Install the dependences
+- Install the dependencies
 
   `npm install`
 
-## Start API
+## Start API (Docker)
 
 - Launch the app & DB (mysql)
 
   In a shell, at the root directory of the project, type
 
-  `npm run start` or `docker compose up`
+  `npm run start`
 
 - OpenAPI (swagger)
 
@@ -82,12 +84,9 @@ To make things easier for github users, there in no need for a .env, easier to t
 
 ## Tests + Coverage
 
-- (!! use npm v20 or lesser !!)
-  `nvm use 20`
-
 - Launch global tests
 
-  `npm run test:demo`
+  `npm run test`
 
 ## Developer
 
