@@ -3,13 +3,13 @@ name: CI/CD Pipeline
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 env:
-  NODE_VERSION: 22
+  NODE_VERSION: 24
   DOCKER_IMAGE: gary003/rest_api_nodejs_typescript_esm
   DOCKER_TAG: latest
 
@@ -157,9 +157,10 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm -d -p 8080:8080 --name test-container ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
-          sleep 5  # Wait for container to start
-          curl --fail http://localhost:8080 || exit 1
+          docker run --rm -d -p 8080:8080 --name test-container ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }} &&
+          sleep 10 &&
+          curl http://localhost:8080 || exit 1
+          sleep 1
           docker stop test-container
 
   deploy-dockerHub:

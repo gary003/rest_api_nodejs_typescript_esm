@@ -43,10 +43,11 @@ try {
 
 server.on('listening', async () => {
   if (!process.env.production) logger.info(`app running ... api documentation on localhost:${port} or http://${localIp}:${port}/${urlBase}/doc3/apiDocumentation`)
+  if (process.send) process.send('ready')
 })
 
 // Setup process handlers
 process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
-server.listen(port)
+server.listen(port, '0.0.0.0')

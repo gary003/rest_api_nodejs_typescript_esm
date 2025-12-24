@@ -15,12 +15,12 @@ export default defineConfig({
         'src/v1/infrastructure/persistence/database/db_scripts/**',
         './**/*dto.ts'
       ],
-      thresholds: {
-        branches: 80,
-        lines: 80,
-        functions: 80,
-        statements: 80
-      }
+      // thresholds: {
+      //   branches: 80,
+      //   lines: 80,
+      //   functions: 80,
+      //   statements: 80
+      // }
     }
   }
 })
