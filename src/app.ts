@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import userRoute from './v1/presentation/routes/user/index.js'
 import authRoute from './v1/presentation/routes/auth/index.js'
 
@@ -29,7 +29,7 @@ app.use(compression())
 app.use(helmet())
 app.use(
   cors({
-    origin: 'http://localhost:8080',
+    origin: true, // Reflect origin (more permissive for dev)
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
   })
@@ -39,14 +39,14 @@ app.use(express.json())
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 
 // Redirect root URL to /apiDocV3
-app.get('/', (req, res) => {
+app.get('/', (_ : Request , res : Response) => {
   return res.status(302).redirect(`/${urlBase}/doc3/apiDocumentation`)
 })
 
 app.use(`/${urlBase}/auth`, authRoute)
 app.use(`/${urlBase}/user`, userRoute)
 
-const handleNotFound = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const handleNotFound = (_: Request, res: Response, next: NextFunction) => {
   // Check if any route handler has already handled the request
   if (res.headersSent) {
     return next() // Let other error handlers handle it if already responded to
@@ -55,7 +55,8 @@ const handleNotFound = (req: express.Request, res: express.Response, next: expre
   return res.status(404).json({ message: 'Not Found' })
 }
 
-const handleError = (err: Error, req: express.Request, res: express.Response) => {
+// eslint-disable-next-line no-unused-vars
+const handleError = (err: Error, _: Request, res: Response, _next: NextFunction) => {
   logger.error(err.stack) // Log the error for debugging
 
   // Set default status code to 500 (Internal Server Error)

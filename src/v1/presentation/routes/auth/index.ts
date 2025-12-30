@@ -3,7 +3,7 @@ import { Router, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import logger from '../../../helpers/logger/index.js'
 import { isValidRefreshToken } from '../../middlewares/auth/isValidRefreshToken.js'
-import { storeRefreshToken } from '../../../services/auth/index.js'
+import { storeRefreshToken, revokeToken } from '../../../services/auth/index.js'
 
 const authRouter = Router()
 
@@ -30,6 +30,18 @@ authRouter.route('/getToken').post(async (req: Request, res: Response) => {
   }
 })
 
+authRouter.route('/logout').post(async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body
+    if (!refreshToken) return res.status(400).send('Refresh token is required')
+    await revokeToken(refreshToken)
+    return res.status(200).send('Logged out successfully')
+  } catch (err) {
+    logger.error(`presentation:routes:auth:logout - ${err}`)
+    return res.status(500).send('Internal Server Error')
+  }
+})
+
 authRouter.route('/refreshToken').post(isValidRefreshToken, async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body
@@ -39,7 +51,9 @@ authRouter.route('/refreshToken').post(isValidRefreshToken, async (req: Request,
     if (response instanceof Error) return res.status(403).send('Invalid Refresh Token')
 
     // Remove exp and iat from user object before signing new token
-    const { userInfo } = response as jwt.JwtPayload
+    const userInfo: Record<string, unknown> = { ...(response as jwt.JwtPayload) }
+    delete userInfo.exp
+    delete userInfo.iat
 
     //logger.debug('presentation:routes:auth:refreshToken - ' + JSON.stringify(response))
 
