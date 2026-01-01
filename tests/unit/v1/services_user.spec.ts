@@ -7,7 +7,6 @@ import { addCurrency, deleteUserById, saveNewUser, transferMoney, transferMoneyP
 import { moneyTransferParamsValidatorErrors, transferMoneyErrors, userFunctionsErrors, transferMoneyWithRetryErrors } from '../../../src/v1/services/user/error.dto.js'
 import { transactionQueryRunnerType } from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import logger from '../../../src/v1/helpers/logger/index.js'
-import { Customer } from '../../../src/v1/infrastructure/persistence/database/customer/entity.js'
 import { userWalletDTO } from '../../../src/v1/services/user/dto.js'
 
 // Mock external dependencies
@@ -36,21 +35,23 @@ describe('Unit tests - services:user', () => {
     })
 
     it('should create a new user', async () => {
-      const fakeUserDB = {
-        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
-        firstname: 'fake_Eugene',
-        lastname: 'fake_Porter',
-        wallet: {
+      const fakeUserDBInfo = {
+        newCustomer: {
+          customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+          firstname: 'fake_Eugene',
+          lastname: 'fake_Porter'
+        },
+        walletCreation: {
           wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
           hard_currency: 2000,
           soft_currency: 2000
         }
-      } as unknown as Customer
+      }
 
-      vi.mocked(modUserDB.saveNewCustomerDB).mockResolvedValue(fakeUserDB)
+      vi.mocked(modUserDB.saveNewCustomerDB).mockResolvedValue(fakeUserDBInfo)
 
       try {
-        const response = await saveNewUser(fakeUserDB.firstname, fakeUserDB.lastname)
+        const response = await saveNewUser(fakeUserDBInfo.newCustomer.firstname, fakeUserDBInfo.newCustomer.lastname)
 
         expect(response).toBeDefined()
         expect(modUserDB.saveNewCustomerDB).toHaveBeenCalledTimes(1)
@@ -59,22 +60,23 @@ describe('Unit tests - services:user', () => {
       }
     })
     it('should fail creating a new user', async () => {
-      const fakeUser = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
-        firstname: 'fake_Eugene',
-        lastname: 'fake_Porter',
-        Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+      const fakeUserDBInfo = {
+        newCustomer: {
+          customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+          firstname: 'fake_Eugene',
+          lastname: 'fake_Porter'
+        },
+        walletCreation: {
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
-
       vi.mocked(modUserDB.saveNewCustomerDB).mockRejectedValue(new Error('DB Error'))
       // logger is mocked automatically
 
       try {
-        await saveNewUser(fakeUser.firstname, fakeUser.lastname)
+        await saveNewUser(fakeUserDBInfo.newCustomer.firstname, fakeUserDBInfo.newCustomer.lastname)
         expect.fail('Unexpected success')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {

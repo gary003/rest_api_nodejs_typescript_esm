@@ -1,8 +1,10 @@
 import { OpenAPIObject } from 'openapi3-ts/oas31'
 
-const API_VERSION = process.env.API_VERSION || '1.0.0'
-const API_BASEPATH = process.env.API_BASEPATH || '/api/v1'
+const API_VERSION = process.env.API_VERSION || '3.0.0'
+const API_SCHEME = process.env.API_SCHEME || 'http'
+const API_HOST = process.env.API_HOST || 'localhost'
 const API_PORT = process.env.API_PORT || 8080
+const API_BASEPATH = process.env.API_BASEPATH || '/api/v1'
 
 const apiDocumentation: OpenAPIObject = {
   openapi: '3.1.0',
@@ -21,7 +23,7 @@ const apiDocumentation: OpenAPIObject = {
   },
   servers: [
     {
-      url: `http://localhost:${API_PORT}${API_BASEPATH}`,
+      url: `${API_SCHEME}://${API_HOST}:${API_PORT}${API_BASEPATH}`,
       description: 'Local development server'
     }
   ],

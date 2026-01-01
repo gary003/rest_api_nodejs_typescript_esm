@@ -62,25 +62,42 @@ export const getAllUsersStream = async () => {
  * @throws {Error} - If the user creation fails.
  */
 export const saveNewUser = async (firstname: string, lastname: string): Promise<userWalletDTO> => {
-  const newUser = await saveNewCustomerDB(firstname, lastname).catch((err) => err)
+  const newCustomerInfo = await saveNewCustomerDB(firstname, lastname).catch((err) => err)
 
-  if (newUser instanceof Error) {
+  if (newCustomerInfo instanceof Error) {
     // Log and throw an error if user creation fails
-    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser!.message} \n databaseError: ${String(newUser)}`
+    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser!.message} \n databaseError: ${String({newCustomerInfo})}`
     logger.error(saveError)
     throw new Error(saveError)
   }
 
-  return newUser as unknown as userWalletDTO
+  const {newCustomer, walletCreation} = newCustomerInfo
+
+  const newUser = {
+    userId: newCustomer.customer_id,
+    firstname: newCustomer.firstname,
+    lastname: newCustomer.lastname,
+    Wallet: {
+      walletId: walletCreation.wallet_id,
+      hardCurrency: walletCreation.hard_currency,
+      softCurrency: walletCreation.soft_currency
+    }
+  } as userWalletDTO
+
+
+  logger.info(`User ${newUser.userId} created successfully`)
+  logger.info(JSON.stringify(newUser))
+
+  return newUser
 }
 
 /**
  * Adds currency to a user's wallet.
- * @param {string} userId - The ID of the user.
- * @param {moneyTypes} currencyType - The type of currency to add (e.g., hard_currency, soft_currency).
- * @param {number} amount - The amount of currency to add.
- * @returns {Promise<boolean>} - True if the update is successful.
- * @throws {Error} - If the amount is invalid, the currency type is invalid, or the update fails.
+ * @param {string} userId
+ * @param {moneyTypes} currencyType
+ * @param {number} amount
+ * @returns {Promise<boolean>}
+ * @throws {Error}
  */
 export const addCurrency = async (userId: string, currencyType: moneyTypes, amount: number): Promise<boolean> => {
   // Validate the amount and currency type

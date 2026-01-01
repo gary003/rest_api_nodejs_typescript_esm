@@ -131,7 +131,7 @@ describe('Integration tests - presentation:routes:user', () => {
       const body = JSON.parse(response.text)
 
       // Get the user id from DB response in addUser
-      testUserId1 = body.data.customer_id
+      testUserId1 = body.data.userId
 
       // logger.debug(JSON.stringify(body))
       expect(response.statusCode).to.be.within(200, 299)

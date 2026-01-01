@@ -1,3 +1,6 @@
-import { wallet } from '../../../../services/wallet/dto.js'
-
-export type walletDBDTO = {} & wallet
+export type walletDBDTO = {
+    wallet_id: string
+    customer_id: string
+    hard_currency: number
+    soft_currency: number
+}

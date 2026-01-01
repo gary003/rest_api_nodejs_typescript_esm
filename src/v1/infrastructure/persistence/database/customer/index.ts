@@ -86,7 +86,7 @@ export const getAllUsersStreamDB = async () => {
 }
 
 // Save a new customer to the database and create a wallet for them
-export const saveNewCustomerDB = async (firstname: string, lastname: string): Promise<Customer> => {
+export const saveNewCustomerDB = async (firstname: string, lastname: string) => {
   const newCustomer = new Customer() // Create new customer entity
   newCustomer.customer_id = uuidv4() // Generate unique ID
   newCustomer.firstname = firstname
@@ -101,7 +101,7 @@ export const saveNewCustomerDB = async (firstname: string, lastname: string): Pr
     throw new Error(`Impossible to create a new wallet or customer - ${String(walletCreation)}`)
   }
 
-  return newCustomer // Return the new customer
+  return {newCustomer, walletCreation} // Return the new customer
 }
 
 // Delete a customer and their associated wallet from the database

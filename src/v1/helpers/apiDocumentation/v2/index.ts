@@ -1,16 +1,13 @@
-import ip from 'ip'
-
-const localIp = ip.address()
 
 const apiDocumentation = {
   swagger: '2.0',
-  host: `${localIp}:${process.env.API_PORT || 8080}`,
-  basePath: '/api/v1',
+  host: `${process.env.API_SCHEME}://${process.env.API_HOST}:${process.env.API_PORT}`,
+  basePath: `${process.env.API_BASE_PATH}`,
   info: {
     title: 'rest_api_backend_user',
     version: '1'
   },
-  schemes: ['http'],
+  schemes: [process.env.API_SCHEME],
   // use for model definition
   definitions: {
     User: {

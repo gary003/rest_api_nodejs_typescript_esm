@@ -67,7 +67,7 @@ export const createNewWalletDB = async (customer: Customer): Promise<walletDBDTO
   newWalletToSave.hard_currency = Math.floor(Math.random() * 2000)
   newWalletToSave.soft_currency = Math.floor(Math.random() * 2000)
 
-  const newWallet = await WalletsRepository.save(newWalletToSave).catch((err) => err)
+  const newWallet: walletDBDTO = await WalletsRepository.save(newWalletToSave).catch((err) => err)
 
   if (newWallet instanceof Error) {
     logger.error(newWallet)
