@@ -28,7 +28,7 @@ export const getAllUsers = async (): Promise<userWalletDTO[]> => {
 
   if (allUsers instanceof Error) {
     // Log and throw an error if the database query fails
-    const allUsersError = `serviceError: ${userFunctionsErrors.ErrorRetrievingUsers!.message} \n databaseError: ${String(allUsers)}`
+    const allUsersError = `serviceError: ${userFunctionsErrors.ErrorRetrievingUsers?.message} \n databaseError: ${String(allUsers)}`
     logger.error(allUsersError)
     throw new Error(allUsersError)
   }
@@ -46,7 +46,7 @@ export const getAllUsersStream = async () => {
 
   if (streamUsers instanceof Error) {
     // Log and throw an error if the stream query fails
-    const errorStream = `serviceError: ${userFunctionsErrors.ErrorRetrievingUsers!.message} \n databaseError: ${String(streamUsers)}`
+    const errorStream = `serviceError: ${userFunctionsErrors.ErrorRetrievingUsers?.message} \n databaseError: ${String(streamUsers)}`
     logger.error(errorStream)
     throw new Error(errorStream)
   }
@@ -66,7 +66,7 @@ export const saveNewUser = async (firstname: string, lastname: string): Promise<
 
   if (newCustomerInfo instanceof Error) {
     // Log and throw an error if user creation fails
-    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser!.message} \n databaseError: ${String({newCustomerInfo})}`
+    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser?.message} \n databaseError: ${String({newCustomerInfo})}`
     logger.error(saveError)
     throw new Error(saveError)
   }
@@ -84,10 +84,6 @@ export const saveNewUser = async (firstname: string, lastname: string): Promise<
     }
   } as userWalletDTO
 
-
-  logger.info(`User ${newUser.userId} created successfully`)
-  logger.info(JSON.stringify(newUser))
-
   return newUser
 }
 
@@ -101,23 +97,23 @@ export const saveNewUser = async (firstname: string, lastname: string): Promise<
  */
 export const addCurrency = async (userId: string, currencyType: moneyTypes, amount: number): Promise<boolean> => {
   // Validate the amount and currency type
-  if (amount <= 0) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorInvalidAmount!.message}`)
-  if (!Object.values(moneyTypesO).includes(currencyType)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType!.message}`)
+  if (amount <= 0) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorInvalidAmount?.message}`)
+  if (!Object.values(moneyTypesO).includes(currencyType)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
 
   // Retrieve the user's wallet information
   const currentUserWalletInfo = await getUserWalletInfo(userId).catch((err) => err)
 
   if (currentUserWalletInfo instanceof Error) {
     // Log and throw an error if the wallet info retrieval fails
-    const userInfoError = `serviceError: ${userFunctionsErrors.ErrorGettingWalletInfo!.message} \n databaseError: ${String(currentUserWalletInfo)}`
+    const userInfoError = `serviceError: ${userFunctionsErrors.ErrorGettingWalletInfo?.message} \n databaseError: ${String(currentUserWalletInfo)}`
     logger.error(userInfoError)
     throw new Error(userInfoError)
   }
 
   // Ensure the user has a wallet
   if (!currentUserWalletInfo.Wallet) {
-    logger.error(userFunctionsErrors.ErrorNoWalletUser!.message)
-    throw new Error(`serviceError: ${userFunctionsErrors.ErrorNoWalletUser!.message}`)
+    logger.error(userFunctionsErrors.ErrorNoWalletUser?.message)
+    throw new Error(`serviceError: ${userFunctionsErrors.ErrorNoWalletUser?.message}`)
   }
 
   // Update the wallet with the new balance
@@ -129,9 +125,9 @@ export const addCurrency = async (userId: string, currencyType: moneyTypes, amou
 
   if (resultUpdate instanceof Error) {
     // Log and throw an error if the wallet update fails
-    logger.error(userFunctionsErrors.ErrorUpdating!.message)
+    logger.error(userFunctionsErrors.ErrorUpdating?.message)
     logger.error(resultUpdate)
-    throw new Error(`serviceError: ${userFunctionsErrors.ErrorUpdating!.message}`)
+    throw new Error(`serviceError: ${userFunctionsErrors.ErrorUpdating?.message}`)
   }
 
   return true
@@ -148,7 +144,7 @@ export const deleteUserById = async (userId: string): Promise<boolean> => {
 
   if (deletedUser instanceof Error) {
     // Log and throw an error if the deletion fails
-    const deleteError = `serviceError: ${userFunctionsErrors.ErrorDeletingUser!.message} \n databaseError: ${String(deletedUser)}`
+    const deleteError = `serviceError: ${userFunctionsErrors.ErrorDeletingUser?.message} \n databaseError: ${String(deletedUser)}`
     logger.error(deleteError)
     throw new Error(deleteError)
   }
@@ -167,7 +163,7 @@ export const getUserWalletInfo = async (userId: string): Promise<userWalletDTO> 
 
   if (userWalletI instanceof Error) {
     // Log and throw an error if the wallet info retrieval fails
-    const fetchError = `serviceError: ${userFunctionsErrors.ErrorFetchingUserInfo!.message} \n databaseError: ${String(userWalletI)}`
+    const fetchError = `serviceError: ${userFunctionsErrors.ErrorFetchingUserInfo?.message} \n databaseError: ${String(userWalletI)}`
     logger.error(fetchError)
     throw new Error(fetchError)
   }
@@ -186,21 +182,21 @@ export const getUserWalletInfo = async (userId: string): Promise<userWalletDTO> 
  */
 export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId: string, recipientId: string, amount: number): Promise<userWalletDTO[]> => {
   // Validate the currency type
-  if (!Object.values(moneyTypesO).includes(currency)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType!.message}`)
+  if (!Object.values(moneyTypesO).includes(currency)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
 
   // Retrieve the giver's wallet information
   const giverUserInfo = await getCustomerWalletInfoDB(giverId).catch((error) => error)
 
   if (giverUserInfo instanceof Error) {
     // Log and throw an error if the giver's wallet info retrieval fails
-    const giverUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo!.message} \n databaseError: ${String(giverUserInfo)}`
+    const giverUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(giverUserInfo)}`
     logger.error(giverUserInfoError)
     throw new Error(giverUserInfoError)
   }
 
   // Ensure the giver has a wallet
   if (!giverUserInfo.Wallet) {
-    const error = `serviceError: ${userFunctionsErrors.ErrorNoWalletUser!.message} \n databaseError: ${String(giverUserInfo)}`
+    const error = `serviceError: ${userFunctionsErrors.ErrorNoWalletUser?.message} \n databaseError: ${String(giverUserInfo)}`
     logger.error(error)
     throw new Error(error)
   }
@@ -210,7 +206,7 @@ export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId
 
   // Ensure the giver has sufficient funds
   if (giverNewBalance < 0) {
-    throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorInsufficientFunds!.message}`)
+    throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorInsufficientFunds?.message}`)
   }
 
   // Retrieve the recipient's wallet information
@@ -218,14 +214,14 @@ export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId
 
   if (recipientUserInfo instanceof Error) {
     // Log and throw an error if the recipient's wallet info retrieval fails
-    const recipientUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo!.message} \n databaseError: ${String(recipientUserInfo)}`
+    const recipientUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(recipientUserInfo)}`
     logger.error(recipientUserInfo)
     throw new Error(recipientUserInfoError)
   }
 
   // Ensure the recipient has a wallet
   if (!recipientUserInfo.Wallet) {
-    const error = `serviceError: ${userFunctionsErrors.ErrorNoWalletUser!.message} \n databaseError: ${String(recipientUserInfo)}`
+    const error = `serviceError: ${userFunctionsErrors.ErrorNoWalletUser?.message} \n databaseError: ${String(recipientUserInfo)}`
     logger.error(error)
     throw new Error(error)
   }
@@ -248,7 +244,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
 
   if (res instanceof Error) {
     // Log and throw an error if the parameter validation fails
-    const paramError = `serviceError: ${transferMoneyErrors.ErrorParamsValidator!.message} \n databaseError: ${String(res)}`
+    const paramError = `serviceError: ${transferMoneyErrors.ErrorParamsValidator?.message} \n databaseError: ${String(res)}`
     logger.error(paramError)
     throw new Error(paramError)
   }
@@ -257,8 +253,8 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
 
   if (!giverUserInfo || !recipientUserInfo) {
     // Log and throw an error if the giver or recipient info is missing
-    logger.error(transferMoneyErrors.ErrorParamsValidator!.message)
-    throw new Error(`serviceError: ${transferMoneyErrors.ErrorParamsValidator!.message}`)
+    logger.error(transferMoneyErrors.ErrorParamsValidator?.message)
+    throw new Error(`serviceError: ${transferMoneyErrors.ErrorParamsValidator?.message}`)
   }
 
   // Start a database transaction
@@ -266,7 +262,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
 
   if (transacRunner instanceof Error) {
     // Log and throw an error if the transaction creation fails
-    const transacRunnerError = `serviceError: ${transferMoneyErrors.ErrorTransactionCreation!.message} \n databaseError: ${String(transacRunner)}`
+    const transacRunnerError = `serviceError: ${transferMoneyErrors.ErrorTransactionCreation?.message} \n databaseError: ${String(transacRunner)}`
     logger.error(transacRunnerError)
     throw new Error(transacRunnerError)
   }
@@ -279,7 +275,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
     // Log and throw an error if the lock acquisition fails
 
     const errorStr = !lockResultGiver ? String(lockResultGiver) : String(lockResultRecipient)
-    const errorLock = `serviceError: ${transferMoneyErrors.ErrorLockAcquisition!.message} - ${errorStr}`
+    const errorLock = `serviceError: ${transferMoneyErrors.ErrorLockAcquisition?.message} - ${errorStr}`
     logger.error(errorLock)
     throw new Error(errorLock)
   }
@@ -291,7 +287,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
 
   if (updateWalletGiverResult instanceof Error) {
     // Log and throw an error if the giver's wallet update fails
-    const updateError = `serviceError: ${transferMoneyErrors.ErrorUpdateGiverWallet!.message} \n databaseError: ${updateWalletGiverResult.message}`
+    const updateError = `serviceError: ${transferMoneyErrors.ErrorUpdateGiverWallet?.message} \n databaseError: ${updateWalletGiverResult.message}`
     logger.error(updateError)
     rollBackAndQuitTransactionRunner(transacRunner)
     throw new Error(updateError)
@@ -306,7 +302,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
 
   if (updateWalletRecipientResult instanceof Error) {
     // Log and throw an error if the recipient's wallet update fails
-    const updateWalletRecipientError = `serviceError: ${transferMoneyErrors.ErrorUpdateRecipientWallet!.message} \n databaseError: ${String(updateWalletRecipientResult)}`
+    const updateWalletRecipientError = `serviceError: ${transferMoneyErrors.ErrorUpdateRecipientWallet?.message} \n databaseError: ${String(updateWalletRecipientResult)}`
     logger.error(updateWalletRecipientError)
     rollBackAndQuitTransactionRunner(transacRunner)
     throw new Error(updateWalletRecipientError)
@@ -346,7 +342,7 @@ export const transferMoneyWithRetry = async (
     // Stop retrying if the maximum number of attempts is reached
     if (attempt >= maxRetries) {
       logger.error(`Transfer failed - Max retry attempt reached: ${attempt} attempts`)
-      throw new Error(`serviceError: ${transferMoneyWithRetryErrors.ErrorMaxRetry!.message} \n maxRetries: ${maxRetries}`)
+      throw new Error(`serviceError: ${transferMoneyWithRetryErrors.ErrorMaxRetry?.message} \n maxRetries: ${maxRetries}`)
     }
 
     const errInfo = err as errorType

@@ -36,6 +36,10 @@ app.use(
 )
 app.use(express.json())
 
+app.get(`/${urlBase}/health`, (_ : Request , res : Response) => {
+  return res.status(200).json({ message: 'OK' })
+})
+
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 
 // Redirect root URL to /apiDocV3
