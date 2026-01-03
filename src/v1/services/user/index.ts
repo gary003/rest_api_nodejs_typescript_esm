@@ -11,12 +11,12 @@ import {
   deleteCustomerByIdDB,
   getAllUsersStreamDB
 } from '../../infrastructure/persistence/database/customer/index.js'
-import { updateWalletByWalletIdDB, updateWalletByWalletIdTransaction } from '../../infrastructure/persistence/database/wallet/index.js'
-import { moneyTypes, moneyTypesO } from '../../domain/index.js'
 import { userWalletDTO } from './dto.js'
 import { transferMoneyErrors, userFunctionsErrors, moneyTransferParamsValidatorErrors, transferMoneyWithRetryErrors } from './error.dto.js'
-import logger from '../../helpers/logger/index.js'
+import { updateWalletByWalletIdDB, updateWalletByWalletIdTransaction } from '../../infrastructure/persistence/database/wallet/index.js'
+import { moneyTypes, moneyTypesO } from '../../domain/index.js'
 import { errorType } from '../../domain/error.js'
+import logger from '../../helpers/logger/index.js'
 
 /**
  * Retrieves all users along with their wallet information.

@@ -543,7 +543,7 @@ describe('Unit tests - services:user', () => {
         .mockResolvedValue(true) // Subsequent calls succeed
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
-      const result = await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 300)
+      const result = await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 30)
 
       expect(result).toBe(true)
       expect(logger.warn).toHaveBeenCalledTimes(1)

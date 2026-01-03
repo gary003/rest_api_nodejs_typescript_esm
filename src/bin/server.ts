@@ -1,14 +1,13 @@
 import 'dotenv/config'
 import sdk from './tracing.js'
 import * as http from 'http'
-import ip from 'ip'
 import app from '../app.js'
 import logger from '../v1/helpers/logger/index.js'
 import { closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 
 const urlBase: string = 'api/v1'
 
-const localIp: string = ip.address()
+const localIp: string = process.env.API_HOST || 'localhost'
 
 const port: number = Number(process.env.API_PORT) || 8080
 

@@ -1,17 +1,14 @@
 import { Router, Request, Response } from 'express'
-// import logger from '../../../helpers/logger'
 import jwt from 'jsonwebtoken'
-import logger from '../../../helpers/logger/index.js'
 import { isValidRefreshToken } from '../../middlewares/auth/isValidRefreshToken.js'
 import { storeRefreshToken, revokeToken } from '../../../services/auth/index.js'
+import logger from '../../../helpers/logger/index.js'
 
 const authRouter = Router()
 
 authRouter.route('/getToken').post(async (req: Request, res: Response) => {
   try {
     const userInfo = req.body.loggedUser
-
-    // logger.debug('presentation:routes:auth:getToken - ' + JSON.stringify(req.body))
 
     if (!userInfo || !userInfo.id) {
       return res.status(400).send('presentation:routes:auth:getToken -User ID is required')

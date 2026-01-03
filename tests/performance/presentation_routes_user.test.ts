@@ -1,5 +1,4 @@
-import chai, { expect } from 'chai'
-import { describe, it } from 'mocha'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment, Wait } from 'testcontainers'
 
 import { exec } from 'child_process'
@@ -35,7 +34,7 @@ describe('Performance tests - presentation:routes:user', () => {
 
   let appUrl: string = ''
 
-  before(async () => {
+  beforeAll(async () => {
     const composeFilePath: string = '.'
     const composeFile: string = 'docker-compose.yaml'
 
@@ -49,7 +48,7 @@ describe('Performance tests - presentation:routes:user', () => {
 
       await new Promise((resolve) => setTimeout(resolve, DB_READY_WAIT_MS))
     } catch (error) {
-      chai.assert.fail(`Container test environment setup failed: ${String(error)}`)
+      expect.fail(`Container test environment setup failed: ${String(error)}`)
     }
 
     const appContainer = dockerComposeEnvironment.getContainer('app-1')
@@ -59,7 +58,7 @@ describe('Performance tests - presentation:routes:user', () => {
     appUrl = `http://${appContainer.getHost()}:${appContainer.getMappedPort(appPort)}/api/v1/user`
   })
 
-  after(async () => {
+  afterAll(async () => {
     await dockerComposeEnvironment.down()
 
     // Cancel the modification of the env variable
