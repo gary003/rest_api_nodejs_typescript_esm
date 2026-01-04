@@ -137,6 +137,18 @@ export const rollBackAndQuitTransactionRunner = async (queryRunner: QueryRunner)
  * @throws {Error} - If acquiring the lock fails.
  */
 export const acquireLockOnWallet = async (queryRunner: QueryRunner, walletId: string): Promise<boolean> => {
+  if (process.env.NODE_ENV === 'development') {
+    logger.info(`Skip lock on wallet (dev env) ${walletId}`)
+    return true
+  }
+
+  /**
+   * Acquires a lock on a wallet for transaction safety.
+   * @param {QueryRunner} queryRunner - The query runner for the transaction.
+   * @param {string} walletId - The ID of the wallet to lock.
+   * @returns {Promise<boolean>} - True if the lock is successfully acquired.
+   * @throws {Error} - If acquiring the lock fails.
+   */
   const lockResult = await queryRunner.query('SELECT * FROM wallet WHERE wallet_id = ? FOR UPDATE', [walletId]).catch((err) => err)
 
   if (lockResult instanceof Error) {

@@ -1,13 +1,13 @@
 
 const apiDocumentation = {
   swagger: '2.0',
-  host: `${process.env.API_SCHEME}://${process.env.API_HOST}:${process.env.API_PORT}`,
-  basePath: `${process.env.API_BASE_PATH}`,
+  host: `${process.env.API_HOST || 'localhost'}:${process.env.API_PORT || '8080'}`,
+  basePath: `${process.env.API_BASEPATH || '/api/v1'}`,
   info: {
-    title: 'rest_api_backend_user',
-    version: '1'
+    title: 'rest_api_backend_user_esm_dev ',
+    version: '0.0.0.dev'
   },
-  schemes: [process.env.API_SCHEME],
+  schemes: [process.env.API_SCHEME || 'http'],
   // use for model definition
   definitions: {
     User: {
@@ -74,18 +74,6 @@ const apiDocumentation = {
         responses: {
           '200': {
             description: 'Successfully save new user'
-          }
-        }
-      }
-    },
-    '/user/stream': {
-      get: {
-        tags: ['user'],
-        summary: 'get all users from stream',
-        description: 'all users will be retrieve from DB',
-        responses: {
-          '200': {
-            description: 'Successfuly get all users with a stream '
           }
         }
       }

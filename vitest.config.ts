@@ -13,7 +13,10 @@ export default defineConfig({
         'src/v1/infrastructure/observability/**',
         'src/v1/infrastructure/persistence/database/db_volume/**',
         'src/v1/infrastructure/persistence/database/db_scripts/**',
-        './**/*dto.ts'
+        './**/*dto.ts',
+        '**/*.db',
+        '**/db_file_volume/**',
+        '**/sqlite/**'
       ],
       // thresholds: {
       //   branches: 80,

@@ -7,10 +7,11 @@
   "type": "module",
   "scripts": {
     "start": "npm run clean && docker compose up --build -d",
-    "start:dev": "npx tsx watch src/bin/server.ts",
     "stop": "docker compose down --remove-orphans",
     "build:app": "npx tsc -p .",
     "rebuild": "docker compose build --no-cache",
+    "dev:start": "npm run dev:seed:db && NODE_ENV=development DB_DRIVER=sqlite DB_DATABASE_NAME=src/v1/infrastructure/persistence/database/db_test_development/db_file_volume/sqlite.db dotenv -e .env.dev npx tsx watch src/bin/server.ts",
+    "dev:seed:db": "npx tsx src/v1/infrastructure/persistence/database/db_test_development/db_file_scripts/seed_local_db.ts",
     "minify": "bash ./scripts/minify_p.sh",
     "docker:logs:app": "docker logs $(docker ps | grep -- -app | awk '{print $1}')",
     "docker:logs:db": "docker logs $(docker ps | grep -- -db | awk '{print $1}')",
@@ -44,6 +45,7 @@
     "mysql2": "^3.12.0",
     "pm2": "^6.0.14",
     "redis": "^4.7.1",
+    "sqlite3": "^5.1.7",
     "typeorm": "^0.3.20",
     "uuid": "^8.3.2",
     "winston": "^3.10.0",
@@ -63,16 +65,17 @@
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
     "@vitest/coverage-v8": "^4.0.16",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9.20.1",
-    "prettier": "^3.5.1",
     "openapi3-ts": "^4.4.0",
-    "swagger-ui-express": "^5.0.1",
+    "prettier": "^3.5.1",
     "supertest": "^6.2.3",
-    "vitest": "^4.0.16",
+    "swagger-ui-express": "^5.0.1",
     "testcontainers": "^10.16.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.24.1"
+    "typescript-eslint": "^8.24.1",
+    "vitest": "^4.0.16"
   },
   "license": "MIT"
 }

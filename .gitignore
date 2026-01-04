@@ -25,9 +25,9 @@ grafana_data_volume
 # Persistence volumes
 db_volume
 
-# sqlite db file
-*sqlite*
-sqlite.db
+# # sqlite db file
+# *sqlite*
+# sqlite.db
 
 # dump project file
 project_dump*

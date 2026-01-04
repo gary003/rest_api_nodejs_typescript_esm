@@ -5,7 +5,7 @@ import app from '../app.js'
 import logger from '../v1/helpers/logger/index.js'
 import { closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 
-const urlBase: string = 'api/v1'
+const urlBase: string = process.env.API_BASEPATH || '/api/v1'
 
 const localIp: string = process.env.API_HOST || 'localhost'
 
@@ -41,7 +41,7 @@ try {
 }
 
 server.on('listening', async () => {
-  if (!process.env.production) logger.info(`app running ... api documentation on localhost:${port} or http://${localIp}:${port}/${urlBase}/doc3/apiDocumentation`)
+  if (!process.env.production) logger.info(`app running ... api documentation on localhost:${port} or http://${localIp}:${port}${urlBase}/apiDocumentation`)
   if (process.send) process.send('ready')
 })
 

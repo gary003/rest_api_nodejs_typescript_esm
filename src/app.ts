@@ -19,10 +19,12 @@ const app = express()
 const urlBase: string = 'api/v1'
 
 if (!process.env.production) {
+  logger.info(`Environment: ${process.env.NODE_ENV}`)
   // openAPI V2
-  app.use(`/${urlBase}/doc2/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation))
-  // openAPI V3
-  app.use(`/${urlBase}/doc3/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
+  if(process.env.NODE_ENV === 'development')
+    app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation))
+  else// openAPI V3
+    app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
 }
 
 app.use(compression())
@@ -44,7 +46,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 
 // Redirect root URL to /apiDocV3
 app.get('/', (_ : Request , res : Response) => {
-  return res.status(302).redirect(`/${urlBase}/doc3/apiDocumentation`)
+  return res.status(302).redirect(`/${urlBase}/apiDocumentation`)
 })
 
 app.use(`/${urlBase}/auth`, authRoute)

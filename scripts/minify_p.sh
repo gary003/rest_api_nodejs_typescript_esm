@@ -14,6 +14,7 @@ find . -type f \
 ! -path "*/logs/*" \
 ! -path "*/coverage/*" \
 ! -path "*/db_volume/*" \
+! -path "*/db_file_volume/*" \
 ! -path "*/grafana_data_volume/*" \
 ! -path "*/promtail/*" \
 ! -path "*/trace_data_volume/*" \

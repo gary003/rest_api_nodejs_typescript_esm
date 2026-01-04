@@ -58,35 +58,38 @@ To make things easier for GitHub users, there is no need for a .env file, making
 
 - Clone the project
 
-  `git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git`
+  ```git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git```
 
 - Go into the project directory
 
-  `cd rest_api_nodejs_typescript_esm`
+  ```cd rest_api_nodejs_typescript_esm```
 
 - Install the dependencies
 
-  `npm install`
+  ```npm install```
 
-## Start API (Docker)
+## Start API Docker
 
 - Launch the app & DB (mysql)
-
   In a shell, at the root directory of the project, type
+    ```npm run start```
 
-  `npm run start`
+## Start API Local
 
-- OpenAPI (swagger)
+- Launch the app & DB (sqlite)
+  In a shell, at the root directory of the project, type
+    ```npm run dev:start```
 
-  Copy this url in a browser (adapt the port if needed)
+## OpenAPI (swagger)
 
-  `localhost:8080`
+- Copy this url in a browser (adapt the port if needed)
+  url : `http://localhost:8080`
 
 ## Tests + Coverage
 
-- Launch global tests
+- Launch all tests
 
-  `npm run test`
+  ```npm run test```
 
 ## Developer
 
