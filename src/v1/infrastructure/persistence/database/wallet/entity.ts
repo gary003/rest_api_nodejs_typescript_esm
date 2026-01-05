@@ -4,13 +4,13 @@ import { Customer } from '../customer/entity.js'
 @Entity()
 export class Wallet {
   @PrimaryColumn('varchar')
-  wallet_id!: string
+    wallet_id!: string
 
   @Column('int')
-  hard_currency!: number
+    hard_currency!: number
 
   @Column('int')
-  soft_currency!: number
+    soft_currency!: number
 
   @Index('idx_wallet_customer_id')
   @OneToOne(() => Customer, { cascade: true, onDelete: 'CASCADE' })
@@ -18,5 +18,5 @@ export class Wallet {
     name: 'customer_id',
     referencedColumnName: 'customer_id'
   })
-  customer!: Customer
+    customer!: Customer
 }

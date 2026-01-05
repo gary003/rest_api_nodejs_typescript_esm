@@ -8,7 +8,7 @@
   - docker-compose.yaml
   - Dockerfile
   - Test, build docker images, deploy docker images to **DockerHub**
-- Testing using **vitest** && **Sinon.js** && **Mocha**
+- Testing using **vitest**
   - Mocks
   - Coverage
   - Unit tests
@@ -58,38 +58,55 @@ To make things easier for GitHub users, there is no need for a .env file, making
 
 - Clone the project
 
-  ```git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git```
+  ```bash
+    git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
+  ```
 
 - Go into the project directory
 
-  ```cd rest_api_nodejs_typescript_esm```
+  ```bash
+    cd rest_api_nodejs_typescript_esm
+  ```
 
 - Install the dependencies
 
-  ```npm install```
+  ```bash
+    npm install
+  ```
 
-## Start API Docker
+## Start API
+
+### With Docker
 
 - Launch the app & DB (mysql)
-  In a shell, at the root directory of the project, type
-    ```npm run start```
+  In a shell, at the root directory of the project, type:
 
-## Start API Local
+  ```bash
+    npm run start
+  ```
+
+### On Local Machine
 
 - Launch the app & DB (sqlite)
   In a shell, at the root directory of the project, type
-    ```npm run dev:start```
+
+  ```bash
+    npm run dev:start
+  ```
 
 ## OpenAPI (swagger)
 
 - Copy this url in a browser (adapt the port if needed)
+
   url : `http://localhost:8080`
 
 ## Tests + Coverage
 
 - Launch all tests
 
-  ```npm run test```
+  ```bash
+    npm run test
+  ```
 
 ## Developer
 

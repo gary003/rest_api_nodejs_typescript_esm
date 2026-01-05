@@ -5,8 +5,6 @@ import app from '../app.js'
 import logger from '../v1/helpers/logger/index.js'
 import { closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 
-const urlBase: string = process.env.API_BASEPATH || '/api/v1'
-
 const localIp: string = process.env.API_HOST || 'localhost'
 
 const port: number = Number(process.env.API_PORT) || 8080
@@ -41,7 +39,7 @@ try {
 }
 
 server.on('listening', async () => {
-  if (!process.env.production) logger.info(`app running ... api documentation on localhost:${port} or http://${localIp}:${port}${urlBase}/apiDocumentation`)
+  if (!process.env.production) logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
   if (process.send) process.send('ready')
 })
 

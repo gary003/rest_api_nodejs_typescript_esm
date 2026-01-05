@@ -19,7 +19,6 @@ const app = express()
 const urlBase: string = 'api/v1'
 
 if (!process.env.production) {
-  logger.info(`Environment: ${process.env.NODE_ENV}`)
   // openAPI V2
   if(process.env.NODE_ENV === 'development')
     app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation))
@@ -61,7 +60,6 @@ const handleNotFound = (_: Request, res: Response, next: NextFunction) => {
   return res.status(404).json({ message: 'Not Found' })
 }
 
-// eslint-disable-next-line no-unused-vars
 const handleError = (err: Error, _: Request, res: Response, _next: NextFunction) => {
   logger.error(err.stack) // Log the error for debugging
 
