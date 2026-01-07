@@ -7,4 +7,4 @@ export const apps = [
     wait_ready: true,
     listen_timeout: 3000
   }
-];
+]

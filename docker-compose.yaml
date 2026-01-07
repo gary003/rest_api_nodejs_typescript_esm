@@ -1,6 +1,7 @@
 services:
   app:
     build: .
+    image: gary003/rest_api_nodejs_typescript_esm:latest
     logging:
       driver: json-file
       options:
@@ -12,8 +13,16 @@ services:
     ports:
       - '${API_PORT:-8080}:${API_PORT:-8080}'
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:8080/api/v1/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       - NODE_ENV=${NODE_ENV:-test}
       - API_SCHEME=${API_SCHEME:-http}

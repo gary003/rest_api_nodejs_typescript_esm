@@ -15,6 +15,7 @@ export const isAuthorized = (req: Request, res: Response, next: NextFunction) =>
 
     // logger.debug(JSON.stringify(userFromToken))
 
+    if (!req.body) req.body = {}
     req.body.user = userFromToken
 
     return next()

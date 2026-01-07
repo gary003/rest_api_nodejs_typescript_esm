@@ -18,6 +18,36 @@ const app = express()
 
 const urlBase: string = 'api/v1'
 
+app.use(compression())
+app.disable('x-powered-by')
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ['\'self\''],
+        scriptSrc: ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\''], // Needed for Swagger UI
+        styleSrc: ['\'self\'', '\'unsafe-inline\''],
+        imgSrc: ['\'self\'', 'data:', 'validator.swagger.io'],
+        connectSrc: ['\'self\''],
+        baseUri: ['\'self\''],
+        formAction: ['\'self\'']
+      }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' }
+  })
+)
+
+// Add Security and Cache headers
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=(), interest-cohort=()')
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  res.setHeader('Pragma', 'no-cache')
+  res.setHeader('Expires', '0')
+  next()
+})
+
 if (!process.env.production) {
   // openAPI V2
   if(process.env.NODE_ENV === 'development')
@@ -25,9 +55,6 @@ if (!process.env.production) {
   else// openAPI V3
     app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
 }
-
-app.use(compression())
-app.use(helmet())
 app.use(
   cors({
     origin: true, // Reflect origin (more permissive for dev)
