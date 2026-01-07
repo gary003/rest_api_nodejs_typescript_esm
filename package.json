@@ -25,7 +25,7 @@
     "lint": "npx eslint .",
     "test": "npm run lint && npm run clean && npx vitest run --coverage './tests/integration' './tests/unit/v1'",
     "test:integration": "npm run clean && npx vitest run --coverage './tests/integration'",
-    "test:performance": "npm run clean && npx vitest run --coverage './tests/performance'",
+    "test:performance": "npm run clean && npx vitest run './tests/performance'",
     "test:unit:v1": "npm run clean && npx vitest run --coverage './tests/unit/v1'"
   },
   "dependencies": {

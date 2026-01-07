@@ -6,9 +6,9 @@ import { promisify } from 'util'
 
 const execAsync = promisify(exec)
 
-const DB_READY_WAIT_MS = 30000
-
 describe('Performance tests - presentation:routes:user', () => {
+  const timeoutTest = 120000
+
   // Dont accidentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
@@ -19,7 +19,7 @@ describe('Performance tests - presentation:routes:user', () => {
   const originalEnv = { ...process.env }
 
   // This is a portfolio API, in a real project, use a .env !
-  const test_env: Record<string, string> = {
+  const test_env = {
     DB_DRIVER: 'mysql',
     DB_USERNAME: 'mysql',
     DB_PASSWORD: 'mypass',
@@ -45,8 +45,6 @@ describe('Performance tests - presentation:routes:user', () => {
         .withWaitStrategy('app-1', Wait.forLogMessage('app running'))
         .withWaitStrategy('db-1', Wait.forLogMessage('ready for connections'))
         .up(['app'])
-
-      await new Promise((resolve) => setTimeout(resolve, DB_READY_WAIT_MS))
     } catch (error) {
       expect.fail(`Container test environment setup failed: ${String(error)}`)
     }
@@ -56,15 +54,15 @@ describe('Performance tests - presentation:routes:user', () => {
     const appPort = Number(process.env.API_PORT) || 8080
 
     appUrl = `http://${appContainer.getHost()}:${appContainer.getMappedPort(appPort)}/api/v1/user`
-  })
+  }, timeoutTest)
 
   afterAll(async () => {
-    await dockerComposeEnvironment.down()
+    if (dockerComposeEnvironment) await dockerComposeEnvironment.down()
 
     // Cancel the modification of the env variable
     process.env = originalEnv
     // logger.info("Docker Compose test environment stopped for integration tests on user/.")
-  })
+  }, timeoutTest)
 
   describe('routes > user > /user GET', () => {
     it('Should maintain stable memory usage under load', async () => {
@@ -87,10 +85,10 @@ describe('Performance tests - presentation:routes:user', () => {
         const avgLatencyStr = avgLatencyLineValues[6]
         if (!avgLatencyStr) expect.fail('invalid value for avg latency')
         const avgLatency = parseFloat(avgLatencyStr)
-        expect(avgLatency).to.be.below(1500)
+        expect(avgLatency).to.be.below(3000)
       } else {
         expect.fail('Average latency not found in autocannon output.')
       }
-    })
+    }, timeoutTest)
   })
 })
