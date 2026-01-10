@@ -68,14 +68,16 @@ describe('Performance tests - presentation:routes:user', () => {
     it('Should maintain stable memory usage under load', async () => {
       const cmd = `npx autocannon -c 50 -d 5 -m GET "${appUrl}"`
 
-      const { stderr } = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 })
+      const { stdout, stderr } = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 })
+
+      const output = stdout || stderr
 
       // Look for key performance indicators
-      expect(stderr).to.include('requests in')
-      expect(stderr).not.to.include('errors')
+      expect(output).to.include('requests in')
+      expect(output).not.to.include('errors')
 
       // Parse the output to get specific metrics
-      const avgLatencyLine = stderr.split('\n').at(7)
+      const avgLatencyLine = output.split('\n').at(7)
 
       if (!avgLatencyLine) expect.fail('wrong format for result line')
 

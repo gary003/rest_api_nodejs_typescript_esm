@@ -35,10 +35,10 @@ const getConnectionOptions = async (): Promise<DataSourceOptions> => {
     username: process.env.DB_USERNAME, // Database username
     password: process.env.DB_PASSWORD, // Database password
     database: process.env.DB_DATABASE_NAME, // Database name
-    poolSize: 10, // Max connections in the pool
+    poolSize: 50, // Max connections in the pool
     idleTimeout: 30000,
     extra: {
-      connectionLimit: 10, // Max connections (matches poolSize)
+      connectionLimit: 50, // Max connections (matches poolSize)
       queueLimit: 0 // No limit on queued requests
     }
   } as DataSourceOptions

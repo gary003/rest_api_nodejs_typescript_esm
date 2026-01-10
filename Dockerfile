@@ -1,5 +1,5 @@
 FROM node:24-alpine
-RUN apk update && apk upgrade --no-cache
+# RUN apk update && apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -9,7 +9,6 @@ RUN npm ci
 
 COPY src ./src
 COPY ecosystem.config.js ./
-COPY eslint.config.mjs ./
 COPY tsconfig.json ./
 
 EXPOSE 8080
