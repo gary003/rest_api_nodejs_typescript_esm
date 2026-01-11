@@ -12,8 +12,7 @@ const DB_READY_WAIT_MS = 30000
 describe('Integration tests - presentation:routes:user', () => {
   const originalEnv = { ...process.env } as const  
 
-  // Dont acci
-  // dentally fetch the real database (use the containerized test environment) !
+  // Dont accidentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
 
@@ -49,6 +48,7 @@ describe('Integration tests - presentation:routes:user', () => {
     const composeFilePath = '.'
     const composeFile = 'docker-compose.yaml'
 
+    // Initialize docker-compose test environment
     try {
       dockerComposeEnvironment = await new DockerComposeEnvironment(composeFilePath, composeFile)
         .withPullPolicy(PullPolicy.defaultPolicy())
@@ -63,16 +63,13 @@ describe('Integration tests - presentation:routes:user', () => {
       expect.fail(errorInfo)
     }
 
+    // create DB connection params to containerized test environment
     const dbContainer = dockerComposeEnvironment.getContainer('db-1')
-
     const dbPort = Number(process.env.DB_PORT) || 3306
-
     const dbUriTest = `${process.env.DB_DRIVER}://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbContainer.getHost()}:${dbContainer.getMappedPort(dbPort)}/${process.env.DB_DATABASE_NAME}`
 
-    // // Set DB connection params - use individual params instead of URI to avoid parsing issues
+    // Set DB connection params to containerized test environment
     process.env.DB_URI = dbUriTest
-    // process.env.DB_HOST = dbContainer.getHost()
-    
     process.env.DB_PORT = String(dbContainer.getMappedPort(dbPort))
   }, 300000)
 
@@ -163,9 +160,9 @@ describe('Integration tests - presentation:routes:user', () => {
       expect(body).to.have.property('middlewareError')
     })
     it('should fail returning a single user ( user dont exists )', async () => {
-      const wrongUserId = 'zz2c990b6-029c-11ed-b939-0242ac12002'
+      const nonExistentUserId = '00000000-0000-4000-a000-000000000000'
 
-      const response = await request(app).get(`/${urlBase}/user/${wrongUserId}`).set('Accept', 'application/json')
+      const response = await request(app).get(`/${urlBase}/user/${nonExistentUserId}`).set('Accept', 'application/json')
 
       expect(response.statusCode).to.be.within(500, 599)
       expect(response.text).includes('Impossible to get any')
@@ -242,8 +239,9 @@ describe('Integration tests - presentation:routes:user', () => {
     })
 
     it('should fail transferring money (non-existent sender)', async () => {
+      const nonExistentSenderId = '00000000-0000-4000-a000-000000000000'
       const invalidTransferData = {
-        senderId: 'zz2c990b6-029c-11ed-b939-0242ac12002',
+        senderId: nonExistentSenderId,
         receiverId: testUserId1,
         amount: 10,
         currency: moneyTypesO.hard_currency

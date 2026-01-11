@@ -44,16 +44,15 @@ export const connectionDB = async (currentAttempt: number = 1, maxAttempts: numb
  */
 export const getConnection = async (): Promise<DataSource> => {
   if (connection && connection.isInitialized) return connection // Return existing connection if available
-
-  const newConnection = await connectionDB().catch((err) => err) // Attempt to connect
-
-  if (newConnection instanceof Error) {
-    const errorMessage = `Failed to establish database connection - ${String(newConnection)}`
+ 
+  const newConnection = await connectionDB().catch((err) => {
+    const errorMessage = `Failed to establish database connection - ${String(err)}`
     logger.error(errorMessage)
     throw new Error(errorMessage)
-  }
-
-  return newConnection // Return the new connection
+  })
+ 
+  connection = newConnection // Cache the connection
+  return connection // Return the new connection
 }
 
 /**
