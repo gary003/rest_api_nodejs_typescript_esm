@@ -270,7 +270,7 @@ describe('Integration tests - presentation:routes:user', () => {
 
       // logger.debug(JSON.stringify(response))
 
-      expect(response.statusCode).to.be.equal(401)
+      expect(response.statusCode).to.be.equal(403)
     })
 
     it('should delete a specified user (logged user is admin)', async () => {

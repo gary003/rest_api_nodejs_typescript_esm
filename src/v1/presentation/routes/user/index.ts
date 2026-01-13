@@ -33,7 +33,7 @@ userRouter
         if (results instanceof Error) {
           const errInfo = `presentationError: ${errorAPIUSER.errorAPIGetAllUsers.message} \n ${String(results)}`
           logger.error(errInfo)
-          return res.status(588).end(errInfo)
+          return res.status(500).end(errInfo)
         }
 
         const apiRes: apiResponseGetAllUserType = { data: results as userWalletDTO[] }
@@ -77,11 +77,11 @@ userRouter.route('/transfer').post(async (req: Request, res: Response) => {
 
   // Validate amount is a positive number
   if (typeof amount !== 'number' || amount <= 0) {
-    return res.status(498).json(errorAPIUSER.errorAPIUserTransferIllegalAmount)
+    return res.status(400).json(errorAPIUSER.errorAPIUserTransferIllegalAmount)
   }
 
   if (senderId === receiverId) {
-    return res.status(404).json(errorAPIUSER.errorAPIUserTransferSelf)
+    return res.status(400).json(errorAPIUSER.errorAPIUserTransferSelf)
   }
 
   // Call the transferMoney service

@@ -79,7 +79,7 @@ describe('Unit tests - presentation:middlewares', () => {
 
       // Assert
       expect(nextFunction).not.toHaveBeenCalled()
-      expect(statusFn).toHaveBeenCalledWith(401)
+      expect(statusFn).toHaveBeenCalledWith(403)
       expect(jsonFn).toHaveBeenCalledTimes(1)
       expect(jsonFn).toHaveBeenCalledWith({
         message: 'Middleware user:isAdmin - Unauthorized (not an admin user)'
