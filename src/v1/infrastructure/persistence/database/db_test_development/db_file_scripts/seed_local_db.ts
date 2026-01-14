@@ -2,6 +2,7 @@ import { tryToConnectDB } from '../../db_connection/connector.js'
 import { Customer } from '../../customer/entity.js'
 import { Wallet } from '../../wallet/entity.js'
 import path from 'path'
+import logger from '../../../../../helpers/logger/index.js'
 
 // Mock environment variables
 process.env.DB_DRIVER = 'sqlite'
@@ -32,28 +33,28 @@ const wallets = [
 ]
 
 const seed = async () => {
-  console.log('Starting seed process...')
-  console.log('DB Path:', process.env.DB_DATABASE_NAME)
+  logger.info('Starting seed process...')
+  logger.info('DB Path:', process.env.DB_DATABASE_NAME)
 
   try {
     const connection = await tryToConnectDB()
-    console.log('Connected to DB.')
+    logger.info('Connected to DB.')
 
-    console.log('Synchronizing schema (dropping existing tables)...')
+    logger.info('Synchronizing schema (dropping existing tables)...')
     await connection.synchronize(true)
-    console.log('Schema synchronized.')
+    logger.info('Schema synchronized.')
 
     const customerRepo = connection.getRepository(Customer)
     const walletRepo = connection.getRepository(Wallet)
 
-    console.log('Seeding customers...')
+    logger.info('Seeding customers...')
     for (const customerData of customers) {
       const customer = customerRepo.create(customerData)
       await customerRepo.save(customer)
     }
-    console.log(`Seeded ${customers.length} customers.`)
+    logger.info(`Seeded ${customers.length} customers.`)
 
-    console.log('Seeding wallets...')
+    logger.info('Seeding wallets...')
 
     for (const walletData of wallets) {
       const wallet = walletRepo.create({
@@ -64,12 +65,12 @@ const seed = async () => {
       })
       await walletRepo.save(wallet)
     }
-    console.log(`Seeded ${wallets.length} wallets.`)
+    logger.info(`Seeded ${wallets.length} wallets.`)
 
     await connection.destroy()
-    console.log('Seed process completed successfully.')
+    logger.info('Seed process completed successfully.')
   } catch (error) {
-    console.error('Seed failed:', error)
+    logger.error('Seed failed:', error)
     process.exit(1)
   }
 }

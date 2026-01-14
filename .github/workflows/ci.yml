@@ -118,12 +118,13 @@ jobs:
 
       # Dynamic Analysis - OWASP ZAP
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@v0.15.0
         with:
           target: 'http://localhost:8080/api/v1'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a -j'
           fail_action: false
+          artifact_name: 'zap-scan-results'
         continue-on-error: true
       
       # Upload ZAP reports manually with unique name
@@ -157,7 +158,7 @@ jobs:
       # Upload all results to GitHub Security
       - name: Upload Trivy filesystem results
         if: always()
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-fs'
@@ -165,7 +166,7 @@ jobs:
 
       - name: Upload Trivy container results
         if: always()
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-container.sarif'
           category: 'trivy-container'

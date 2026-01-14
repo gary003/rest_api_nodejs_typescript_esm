@@ -289,7 +289,7 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
     // Log and throw an error if the giver's wallet update fails
     const updateError = `serviceError: ${transferMoneyErrors.ErrorUpdateGiverWallet?.message} \n databaseError: ${updateWalletGiverResult.message}`
     logger.error(updateError)
-    rollBackAndQuitTransactionRunner(transacRunner)
+    await rollBackAndQuitTransactionRunner(transacRunner)
     throw new Error(updateError)
   }
 
@@ -304,12 +304,12 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
     // Log and throw an error if the recipient's wallet update fails
     const updateWalletRecipientError = `serviceError: ${transferMoneyErrors.ErrorUpdateRecipientWallet?.message} \n databaseError: ${String(updateWalletRecipientResult)}`
     logger.error(updateWalletRecipientError)
-    rollBackAndQuitTransactionRunner(transacRunner)
+    await rollBackAndQuitTransactionRunner(transacRunner)
     throw new Error(updateWalletRecipientError)
   }
 
   // Commit the transaction if everything is successful
-  commitAndQuitTransactionRunner(transacRunner)
+  await commitAndQuitTransactionRunner(transacRunner)
 
   return true
 }

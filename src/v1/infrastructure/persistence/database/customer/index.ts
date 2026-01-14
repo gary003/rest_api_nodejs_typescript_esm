@@ -118,39 +118,42 @@ export const deleteCustomerByIdDB = async (customerId: string): Promise<boolean>
   // Start a transaction
   const queryRunner = await createAndStartTransaction()
 
-  // Step 2: Delete the wallet if it exists
-  if (customerToDeleteInfo.Wallet) {
-    const walletDeletion = await deleteWalletByIdDBTransaction(queryRunner, String(customerToDeleteInfo.Wallet.walletId)).catch((err) => err)
+  try {
+    // Step 2: Delete the wallet if it exists
+    if (customerToDeleteInfo.Wallet) {
+      const walletDeletion = await deleteWalletByIdDBTransaction(queryRunner, String(customerToDeleteInfo.Wallet.walletId)).catch((err) => err)
 
-    // Handle wallet deletion errors
-    if (walletDeletion instanceof Error) {
-      logger.error(walletDeletion)
-      await queryRunner.rollbackTransaction() // Rollback on failure
-      throw new Error(`Impossible to delete the customer in DB (step 2) - ${walletDeletion.message}`)
+      // Handle wallet deletion errors
+      if (walletDeletion instanceof Error) {
+        logger.error(walletDeletion)
+        throw new Error(`Impossible to delete the customer in DB (step 2) - ${walletDeletion.message}`)
+      }
     }
+
+    // Step 3: Delete the customer
+    const UserRepository = queryRunner.manager.getRepository(Customer)
+    const deletedUser = await UserRepository.delete(customerId).catch((err) => err)
+
+    // Handle customer deletion errors
+    if (deletedUser instanceof Error) {
+      logger.error(deletedUser)
+      throw new Error(`Impossible to delete the customer in DB (step 3) - ${deletedUser.message}`)
+    }
+
+    if (deletedUser.affected === 0) {
+      logger.error(deletedUser)
+      throw new Error('Impossible to delete the customer in DB (step 3) - no row affected')
+    }
+
+    // Commit the transaction
+    await queryRunner.commitTransaction()
+  } catch (error) {
+    await queryRunner.rollbackTransaction()
+    throw error
+  } finally {
+    // Release the query runner
+    await queryRunner.release()
   }
-
-  // Step 3: Delete the customer
-  const UserRepository = queryRunner.manager.getRepository(Customer)
-  const deletedUser = await UserRepository.delete(customerId).catch((err) => err)
-
-  // Handle customer deletion errors
-  if (deletedUser instanceof Error) {
-    logger.error(deletedUser)
-    await queryRunner.rollbackTransaction() // Rollback on failure
-    throw new Error(`Impossible to delete the customer in DB (step 3) - ${deletedUser.message}`)
-  }
-
-  if (deletedUser.affected === 0) {
-    logger.error(deletedUser)
-    throw new Error('Impossible to delete the customer in DB (step 3) - no row affected')
-  }
-
-  // Commit the transaction
-  await queryRunner.commitTransaction()
-
-  // Release the query runner
-  await queryRunner.release()
 
   return true // Return success
 }

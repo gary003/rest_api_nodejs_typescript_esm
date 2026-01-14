@@ -1,13 +1,12 @@
-import { describe, it, beforeAll, afterAll, expect, vi, beforeEach } from 'vitest'
+import { describe, it, afterAll, expect, vi, beforeEach } from 'vitest'
 import app from '../../src/app'
-import { DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment, Wait } from 'testcontainers'
 import request from 'supertest'
 import logger from '../../src/v1/helpers/logger/index.js'
 import { errorAPIUSER } from '../../src/v1/presentation/routes/user/error.dto.js'
 import { moneyTypesO } from '../../src/v1/domain/index.js'
 import jwt from 'jsonwebtoken'
-
-const DB_READY_WAIT_MS = 30000
+import { closeConnection } from '../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
+import { getDockerTestEnvVariables, getTestUrls } from '../vitest.setup.js'
 
 describe('Integration tests - presentation:routes:user', () => {
   const originalEnv = { ...process.env } as const  
@@ -16,22 +15,12 @@ describe('Integration tests - presentation:routes:user', () => {
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
 
-  // This variable will store the test environment from the docker-compose
-  let dockerComposeEnvironment: StartedDockerComposeEnvironment
+  // Test environment variables from vitest.setup.ts to use in the tests
+  const test_env = getDockerTestEnvVariables()
 
-  // This is a portfolio API, in a real project, use a .env !
-  const test_env = {
-    DB_DRIVER: 'mysql',
-    DB_USERNAME: 'mysql',
-    DB_PASSWORD: 'mypass',
-    DB_DATABASE_NAME: 'mydb',
-    DB_PORT: '3306',
-    DOCKER_APP_NETWORK: 'my_app_network',
-    API_PORT: '8080',
-    LOGLEVEL: 'debug'
-  }
-
-  process.env = { ...process.env, ...test_env }
+  // Modify the current environment variables with the test environment variables
+  // The db needs the env variables to create the uri
+  process.env = {...process.env, ...test_env}
 
   // This is test user ids  use through all tests (as recipient and giver for money transfer tests)
   let testUserId1: string = ''
@@ -40,46 +29,20 @@ describe('Integration tests - presentation:routes:user', () => {
   const urlBase: string = 'api/v1'
   const loggerSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger)
 
+  // Use the environment variables set in vitest.setup.ts to get the db uri
+  const { dbUriTest } = getTestUrls()
+    
+  // Set DB connection params to containerized test environment
+  process.env.DB_URI = dbUriTest
+
   beforeEach(() => {
     loggerSpy.mockClear()
   })
 
-  beforeAll(async () => {
-    const composeFilePath = '.'
-    const composeFile = 'docker-compose.yaml'
-
-    // Initialize docker-compose test environment
-    try {
-      dockerComposeEnvironment = await new DockerComposeEnvironment(composeFilePath, composeFile)
-        .withPullPolicy(PullPolicy.defaultPolicy())
-        .withEnvironment(test_env)
-        .withWaitStrategy('db-1', Wait.forLogMessage('ready for connections'))
-        .up(['db'])
-
-      await new Promise((resolve) => setTimeout(resolve, DB_READY_WAIT_MS))
-    } catch (error) {
-      const errorInfo = `Docker Compose environment setup failed - ${String(error)}`
-      logger.error(errorInfo)
-      expect.fail(errorInfo)
-    }
-
-    // create DB connection params to containerized test environment
-    const dbContainer = dockerComposeEnvironment.getContainer('db-1')
-    const dbPort = Number(process.env.DB_PORT) || 3306
-    const dbUriTest = `${process.env.DB_DRIVER}://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbContainer.getHost()}:${dbContainer.getMappedPort(dbPort)}/${process.env.DB_DATABASE_NAME}`
-
-    // Set DB connection params to containerized test environment
-    process.env.DB_URI = dbUriTest
-    process.env.DB_PORT = String(dbContainer.getMappedPort(dbPort))
-  }, 300000)
-
   afterAll(async () => {
-    if (dockerComposeEnvironment) {
-      await dockerComposeEnvironment.down()
-    }
-
+    await closeConnection()
     process.env = originalEnv
-  }, 100000)
+  })
 
   describe('src > v1 > presentation > routes > user > GET (getting all the users)', () => {
     it('Should get all users from DB', async () => {
