@@ -20,12 +20,13 @@ import { connectionDB } from '../../../src/v1/infrastructure/persistence/databas
 import logger from '../../../src/v1/helpers/logger/index.js'
 
 describe('Unit tests - infrastructure:database:db_connection', () => {
-  const originalEnv = { ...process.env }
+  const originalEnv = { ...process.env } as const
+
+  process.env.DB_URI = ''
+  process.env.DB_HOST = ''
 
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.DB_URI = ''
-    process.env.DB_HOST = ''
   })
 
   afterAll(() => {

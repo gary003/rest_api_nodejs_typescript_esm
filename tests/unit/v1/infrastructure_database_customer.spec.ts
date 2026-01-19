@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import * as connectionFile from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import * as customerModule from '../../../src/v1/infrastructure/persistence/database/customer/index.js'
 import logger from '../../../src/v1/helpers/logger/index.js'
@@ -18,10 +18,18 @@ vi.mock('../../../src/v1/helpers/logger/index.js', () => ({
 }))
 
 describe('Unit tests - infrastructure:database:customer', () => {
+  const originalEnv = { ...process.env } as const
+
+  // Dont accidentially use real DB
+  process.env.DB_URI = ''
+  process.env.DB_HOST = ''
+  
+  afterAll(() => { 
+    process.env = originalEnv
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.DB_URI = ''
-    process.env.DB_HOST = ''
   })
 
   describe('src > v1 > infrastructure > database > customer > index > getAllCustomersDB', () => {

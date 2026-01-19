@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vitest'
 import * as modUserDB from '../../../src/v1/infrastructure/persistence/database/customer/index.js'
 import * as modWalletDB from '../../../src/v1/infrastructure/persistence/database/wallet/index.js'
 import * as modConnection from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
@@ -16,17 +16,21 @@ vi.mock('../../../src/v1/infrastructure/persistence/database/db_connection/conne
 vi.mock('../../../src/v1/helpers/logger/index.js')
 
 describe('Unit tests - services:user', () => {
-  const originalEnv = { ...process.env }
+  const originalEnv = { ...process.env } as const
+
+  process.env.DB_URI = ''
+  process.env.DB_HOST = ''
 
   beforeEach(() => {
     vi.resetAllMocks()
-    process.env = { ...originalEnv }
-    process.env.DB_URI = ''
-    process.env.DB_HOST = ''
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  afterAll(() => {
+    process.env = originalEnv
   })
 
   describe('src > v1 > services > user > index > saveNewUser', () => {

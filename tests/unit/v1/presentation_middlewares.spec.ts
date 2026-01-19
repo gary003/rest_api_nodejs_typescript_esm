@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { isAdmin } from '../../../src/v1/presentation/middlewares/auth/isAdmin.js'
@@ -29,8 +29,17 @@ vi.mock('jsonwebtoken', async (importOriginal) => {
 })
 
 describe('Unit tests - presentation:middlewares', () => {
+  const originalEnv = { ...process.env } as const
+
+  process.env.DB_URI = ''
+  process.env.DB_HOST = ''
+
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterAll(() => {
+    process.env = originalEnv
   })
 
   describe('src > v1 > presentation > middlewares > loggedUser > isAdmin', () => {
