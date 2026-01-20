@@ -57,7 +57,7 @@ All configuration is handled via environment variables. Key variables include:
 
 - **Logs**: PM2 logs are piped to stdout/stderr and captured by Docker's logging driver.
   - Access logs: `docker compose logs -f app`
-- **Health Checks**: The application exposes a health endpoint at `/api/v1/health`.
+- **Health Checks**: The application exposes a health endpoint at `/api/health`.
 - **Metrics/Tracing**: OpenTelemetry hooks are integrated and can be pointed to an OTLP collector.
 
 ## 7. Scaling

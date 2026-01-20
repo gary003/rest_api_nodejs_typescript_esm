@@ -37,7 +37,7 @@
 Explore the detailed project documentation:
 
 - [**Architecture**](./ARCHITECTURE.md) - Clean architecture, layers, and design patterns.
-- [**Testing Strategy**](./TESTING.md) - Unit, Integration (V8-bind), and Performance testing.
+- [**Testing Strategy**](./TESTING.md) - Unit, Integration (V8-bind), and Load testing.
 - [**Security**](./SECURITY.md) - SAST/DAST, encryption, and protection practices.
 - [**API Guide**](./API.md) - Endpoint overview, request/response formats.
 - [**Deployment**](./DEPLOYMENT.md) - Docker Hub, CI/CD, and production operations.

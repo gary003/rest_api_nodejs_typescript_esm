@@ -69,7 +69,7 @@ Testing is a first-class citizen in this architecture.
   - Files are synced back to the host via volumes.
   - This ensures 100% realistic coverage of the **Infrastructure** layer (drivers, middleware, etc.).
 
-### 3. Performance Tests
+### 3. Load Tests
 
 - Load testing using **Autocannon**.
 - Validates the system under stress (locking, pool limits).

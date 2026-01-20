@@ -8,9 +8,9 @@ Our testing strategy follows the **Testing Pyramid**, but with a heavy focus on 
 
 * **Unit Tests**: Domain logic and individual services.
 * **Integration Tests**: End-to-end flow from API route to Database.
-* **Performance Tests**: Load testing via `autocannon`.
+* **Load Tests**: Load testing via `autocannon`.
 
-## 2. Tests Infrastructure (integration & performance tests)
+## 2. Tests Infrastructure (integration & load tests)
 
 ### The Switch **from** Supertest to V8-Bind
 
