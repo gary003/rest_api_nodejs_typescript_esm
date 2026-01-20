@@ -12,7 +12,7 @@
   - Mocks
   - Coverage
   - Unit tests
-  - Integration tests with **Testcontainers** && **Supertest**
+  - Integration tests with **Testcontainers** && **Docker V8-Bind Coverage**
 - Persistence with **Typeorm** && **MySQL** && **Redis**
   - Entities handling
   - Table join
@@ -32,6 +32,19 @@
 - Logging with **Winston**
 - Validation using **Zod**
 
+## Documentation Index
+
+Explore the detailed project documentation:
+
+- [**Architecture**](./ARCHITECTURE.md) - Clean architecture, layers, and design patterns.
+- [**Testing Strategy**](./TESTING.md) - Unit, Integration (V8-bind), and Performance testing.
+- [**Security**](./SECURITY.md) - SAST/DAST, encryption, and protection practices.
+- [**API Guide**](./API.md) - Endpoint overview, request/response formats.
+- [**Deployment**](./DEPLOYMENT.md) - Docker Hub, CI/CD, and production operations.
+- [**Codes of Conduct**](./CODE_OF_CONDUCT.md) - Community standards and pledge.
+
+---
+
 ## Description
 
 This repository is a backend REST API portfolio that has a few routes (CRUD) aiming to keep at hand backend development techniques and show off development skills.
@@ -40,38 +53,35 @@ To make things easier for GitHub users, there is no need for a .env file, making
 ## Prerequisites
 
 - Having Node.js v24 installed (use nvm if needed)
-
 - Having git installed
-
 - Having npm(v6+) & npx installed
-
 - Having docker(v27+) installed
 
-  !! A docker group must be created, then your user (as a sudoer) must be added to it.
-  Otherwise you'll have trouble launching the tests !!
+!! A docker group must be created, then your user (as a sudoer) must be added to it.
+Otherwise you'll have trouble launching the tests !!
 
-  Link to install and configure docker properly : <https://medium.com/devops-technical-notes-and-manuals/how-to-run-docker-commands-without-sudo-28019814198f>
+Link to install and configure docker properly : <https://medium.com/devops-technical-notes-and-manuals/how-to-run-docker-commands-without-sudo-28019814198f>
 
-  Don't forget to restart your computer or session for the changes to be available on all shells
+Don't forget to restart your computer or session for the changes to be available on all shells
 
 ## Git Installation
 
 - Clone the project
 
   ```bash
-    git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
+  git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
   ```
 
 - Go into the project directory
 
   ```bash
-    cd rest_api_nodejs_typescript_esm
+  cd rest_api_nodejs_typescript_esm
   ```
 
 - Install the dependencies
 
   ```bash
-    npm install
+  npm install
   ```
 
 ## Start API
@@ -82,7 +92,7 @@ To make things easier for GitHub users, there is no need for a .env file, making
   In a shell, at the root directory of the project, type:
 
   ```bash
-    npm run start
+  npm run start
   ```
 
 ### On Local Machine
@@ -91,7 +101,7 @@ To make things easier for GitHub users, there is no need for a .env file, making
   In a shell, at the root directory of the project, type
 
   ```bash
-    npm run dev:start
+  npm run dev:start
   ```
 
 ## OpenAPI (swagger)
@@ -102,10 +112,12 @@ To make things easier for GitHub users, there is no need for a .env file, making
 
 ## Tests + Coverage
 
+Detailed testing guide available in [TESTING.md](./TESTING.md).
+
 - Launch all tests
 
   ```bash
-    npm run test
+  npm run test
   ```
 
 ## Developer

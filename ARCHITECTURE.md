@@ -8,35 +8,26 @@ The architecture intentionally favors **clarity and correctness over premature a
 
 ## High‑Level Principles
 
-* **Layered architecture** with strict dependency direction
-* **Environment‑driven behavior** (dev / test / prod)
-* **Explicit error handling** and failure modeling
-* **Testability as a first‑class concern**
-* **Operational awareness** (observability, retries, isolation)
+- **Layered architecture** with strict dependency direction
+- **Environment‑driven behavior** (dev / test / prod)
+- **Explicit error handling** and failure modeling
+- **Testability as a first‑class concern**
+- **Operational awareness** (observability, retries, isolation)
 
 ---
 
-## Layered Design
+## Clean Architecture Layers
 
-```text
-src/
- ├─ api/            → HTTP layer (controllers, middlewares)
- ├─ application/    → Use cases / services
- ├─ domain/         → Business rules, entities, invariants
- ├─ infrastructure/→ DB, persistence, observability, external IO
- └─ main.ts         → Application bootstrap
-```
+src/v1/
+ ├─ presentation/   → HTTP layer (Controllers, Routes, DTOs, Middlewares)
+ ├─ services/       → Pure Business Logic
+ ├─ domain/         → Entities, Value Objects, Aggregates
+ └─ infrastructure/ → External Tools (Database, Redis, Logger, Observability)
 
-### Dependency Rule
-
-```text
-api → application → domain
-            ↓
-      infrastructure
-```
-
-* Inner layers **never depend** on outer layers
-* Infrastructure is **replaceable** (DB, observability, adapters)
+1. **Domain**: The core of the application. Contains entities and business rules. No dependencies on frameworks or libraries.
+2. **Application**: Coordinates tasks and delegates work to the domain.
+3. **Presentation**: Handles HTTP requests/responses. Translates API contracts to application calls.
+4. **Infrastructure**: Implementation of interfaces defined by outer layers (e.g., TypeORM repositories, Redis caching).
 
 ---
 
@@ -44,72 +35,44 @@ api → application → domain
 
 The system behaves differently depending on the environment, by design.
 
-| Environment | Database | Purpose                               |
-| ----------- | -------- | ------------------------------------- |
-| `dev`       | SQLite   | Fast local development, zero setup    |
-| `test`      | MySQL    | Integration tests, prod‑like behavior |
-| `prod`      | MySQL    | Production                            |
-
-Configuration is **explicit** and environment‑driven via `.env.*` files.
-
-SQLite is **dev‑only** and never used as a production reference.
+| Environment | Database | Driver | Purpose |
+| :--- | :--- | :--- | :--- |
+| `dev` | SQLite | `sqlite3` | Fast local development, zero setup |
+| `test` | MySQL | `mysql2` | Integration tests in Docker containers |
+| `prod` | MySQL | `mysql2` | Production environment |
 
 ---
 
 ## Persistence & Database
 
-* **TypeORM** is used as the ORM layer
-* Entities live in `domain`
-* Repositories and DB wiring live in `infrastructure`
-
-### Design Goals
-
-* Strong consistency for write operations
-* Explicit transaction boundaries
-* Retry logic for transient failures
-* Deterministic behavior in tests
+- **TypeORM** is used as the ORM layer.
+- **Entities** live in `domain`.
+- **Repositories** and DB wiring live in `infrastructure`.
 
 ---
 
-## Error Handling Philosophy
+## Testing Strategy (The "Senior Pro" Approach)
 
-Errors are treated as **domain and API contracts**, not just exceptions.
+Testing is a first-class citizen in this architecture.
 
-* Domain errors express business invariants
-* Application errors add context
-* Infrastructure errors are wrapped, logged, and rethrown
-* HTTP layer translates errors into API responses
+### 1. Unit Tests
 
-This enables:
+- Focused on `domain` and `application` layers.
+- Fast, zero IO, zero database.
 
-* Clear debugging
-* Meaningful logs
-* Stable API behavior
+### 2. Integration Tests (Black-Box)
 
----
+- Runs against a **real containerized MySQL** using `testcontainers`.
+- Uses a **V8-Bind Coverage** strategy:
+  - The app runs in a real Docker container.
+  - Coverage is collected natively by the V8 engine inside the container.
+  - Files are synced back to the host via volumes.
+  - This ensures 100% realistic coverage of the **Infrastructure** layer (drivers, middleware, etc.).
 
-## Testing Strategy
+### 3. Performance Tests
 
-Testing is intentionally multi‑layered:
-
-### Unit Tests
-
-* Domain and application logic
-* No IO, no database
-* Fast and deterministic
-
-### Integration Tests
-
-* Real MySQL via containers
-* Full HTTP stack
-* Environment isolation enforced
-
-### Performance Tests
-
-* Autocannon‑based
-* Real containerized app
-
-Tests are designed to validate **failure paths**, not only happy paths.
+- Load testing using **Autocannon**.
+- Validates the system under stress (locking, pool limits).
 
 ---
 
@@ -117,21 +80,10 @@ Tests are designed to validate **failure paths**, not only happy paths.
 
 The architecture is observability‑ready:
 
-* Structured logging
-* Metrics hooks
-* Tracing‑friendly boundaries
-* Clear startup and failure signals
-
-Operational concerns are considered **part of the architecture**, not an afterthought.
-
----
-
-## Non‑Goals
-
-* Premature microservices
-* Over‑abstracted frameworks
-* Multi‑region complexity
-* Hidden magic or implicit behavior
+- **Structured logging** via Winston.
+- **OpenTelemetry** integration (ready for traces/metrics).
+- **PM2** for process management in production.
+- **Health checks** for container orchestration (Kubernetes/Docker Compose ready).
 
 ---
 
@@ -139,9 +91,7 @@ Operational concerns are considered **part of the architecture**, not an afterth
 
 This architecture is designed to:
 
-* Scale in **complexity before scale in size**
-* Be easy to reason about
-* Make failures visible
-* Support long‑term maintenance
-
-It favors **boring, explicit, and testable** design choices over cleverness.
+- Be easy to reason about.
+- Make failures visible.
+- Support long‑term maintenance.
+- Scale in **complexity before scale in size**.

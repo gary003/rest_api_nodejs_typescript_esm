@@ -12,7 +12,7 @@ Our testing strategy follows the **Testing Pyramid**, but with a heavy focus on 
 
 ## 2. Tests Infrastructure (integration & performance tests)
 
-### The Switch from Supertest to V8-Bind
+### The Switch **from** Supertest to V8-Bind
 
 We moved away from mocking the server with `supertest` in favor of a **Dockerized V8-Bind Coverage** approach.
 
