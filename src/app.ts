@@ -16,7 +16,7 @@ import rateLimit from 'express-rate-limit'
 
 const app = express()
 
-const urlBase: string = 'api/v1'
+const urlBase: string = 'api'
 
 app.use(compression())
 app.disable('x-powered-by')
@@ -48,13 +48,14 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
   next()
 })
 
-if (!process.env.production) {
+if (process.env.NODE_ENV !== 'production') {
   // openAPI V2
   if(process.env.NODE_ENV === 'development')
     app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation))
   else// openAPI V3
     app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
 }
+  
 app.use(
   cors({
     origin: true, // Reflect origin (more permissive for dev)
@@ -64,16 +65,21 @@ app.use(
 )
 app.use(express.json())
 
-app.get(`/${urlBase}/health`, (_ : Request , res : Response) => {
+// Redirect absolute root to API Documentation
+app.get('/', (_: Request, res: Response) => {
+  return res.redirect(`/${urlBase}/apiDocumentation`)
+})
+
+app.get(`/${urlBase}/health`, (_: Request, res: Response) => {
   return res.status(200).json({ message: 'OK' })
 })
 
-if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'performance') {
+if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'load') {
   app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 }
 
-// Redirect root URL to /apiDocV3
-app.get('/', (_ : Request , res : Response) => {
+// Redirect root URL to /api/apiDocumentation
+app.get(`/${urlBase}/`, (_: Request, res: Response) => {
   return res.status(302).redirect(`/${urlBase}/apiDocumentation`)
 })
 

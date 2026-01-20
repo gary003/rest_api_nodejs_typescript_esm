@@ -4,7 +4,7 @@ const API_VERSION = process.env.API_VERSION || '3.0.0'
 const API_SCHEME = process.env.API_SCHEME || 'http'
 const API_HOST = process.env.API_HOST || 'localhost'
 const API_PORT = process.env.API_PORT || 8080
-const API_BASEPATH = process.env.API_BASEPATH || '/api/v1'
+const API_BASEPATH = process.env.API_BASEPATH || '/api'
 
 const apiDocumentation: OpenAPIObject = {
   openapi: '3.1.0',

@@ -11,8 +11,8 @@ COPY src ./src
 COPY ecosystem.config.js ./
 COPY tsconfig.json ./
 
-EXPOSE 8080
-
 RUN npm run build:app
+
+EXPOSE 8080
 
 CMD [ "npm", "run", "docker:launch:app" ]

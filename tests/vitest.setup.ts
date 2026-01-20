@@ -23,6 +23,8 @@ export const getDockerTestEnvVariables = (): Record<string, string> => {
   return {
     APP_HOST: 'localhost',
     APP_PORT: '8080',
+    API_HOST: 'localhost',
+    API_PORT: '8080',
     DB_HOST: 'db',
     DB_DRIVER: 'mysql',
     DB_USERNAME: 'mysql',
@@ -54,10 +56,11 @@ export const setup = async (): Promise<void> => {
   
   try {
     globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
+      .withBuild()
       .withPullPolicy(PullPolicy.defaultPolicy())
       .withEnvironment(testEnvVariables)
-      .withWaitStrategy('db-1', Wait.forHealthCheck())
-      .withWaitStrategy('app-1', Wait.forHttp('/api/v1/health', 8080))
+      .withWaitStrategy('db', Wait.forHealthCheck())
+      .withWaitStrategy('app', Wait.forHealthCheck())
       .up(['app','db'])
     
     logger.debug('Docker Compose test environment is ready!')
@@ -67,7 +70,7 @@ export const setup = async (): Promise<void> => {
   }
 }
 
-/** 
+/**
  * @description 
  * Get test URLs
  * Those urls are built from the test environment variables to fetch the according services in the isolated dockerized test environment.
@@ -81,6 +84,38 @@ export const getTestUrls = (testEnvVariables = getDockerTestEnvVariables()): Rec
 }
 
 /**
+ * @description Helper to find the db container with fallback names
+ * Testcontainers/Docker Compose may name containers differently (e.g., 'db', 'db-1', or with project prefix)
+ * @param dockerTestEnv - The started Docker Compose environment
+ * @returns The db container or undefined if not found
+ **/
+const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
+  // Try common container name patterns
+  const candidateNames = ['db', 'db-1']
+  
+  for (const name of candidateNames) {
+    try {
+      return dockerTestEnv.getContainer(name)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
+      // Container not found with this name, try next
+    }
+  }
+  
+  // Last resort: wildcard search in internal containers map
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const env = dockerTestEnv as any
+  const containers = env.containers || {}
+
+  // log in the test machine the docker logs from the db container
+  execSync('docker compose ps && docker compose logs db', { stdio: 'inherit' })
+
+  const dbKey = Object.keys(containers).find((key: string) => key.includes('db'))
+  
+  return dbKey ? containers[dbKey] : undefined
+}
+
+/**
  * @description Vitest global teardown function
  * @returns {Promise<void>}
 **/ 
@@ -91,30 +126,44 @@ export const teardown = async (): Promise<void> => {
   const testEnvVariables = getDockerTestEnvVariables()
   logger.debug('Starting Vitest Global Teardown - Stopping Docker Compose ...')
   try {
-    logger.debug('Cleaning up test users from database ...')
-    const dbContainer = dockerTestEnv.getContainer('db-1')
-    const dbName = testEnvVariables.DB_DATABASE_NAME
-    const rootPassword = testEnvVariables.DB_ROOT_PASSWORD
+    // We wrap the cleanup in a separate try-catch so that if it fails,
+    // we still proceed to stop the environment and process coverage.
+    try {
+      logger.debug('Cleaning up test users from database ...')
+      const dbContainer = getDbContainer(dockerTestEnv)
 
-    // Delete users created during tests (convention: firstname starts with 'test')
-    // We also delete associated wallets first due to foreign key constraints
-    // We use separate exec calls to ensure each statement is executed correctly
-    await dbContainer.exec([
-      'mysql', 
-      '-u', 'root', 
-      `--password=${rootPassword}`, 
-      '-e', `DELETE FROM ${dbName}.wallet WHERE customer_id IN (SELECT customer_id FROM ${dbName}.customer WHERE firstname LIKE 'test%');`
-    ])
-    await dbContainer.exec([
-      'mysql', 
-      '-u', 'root', 
-      `--password=${rootPassword}`, 
-      '-e', `DELETE FROM ${dbName}.customer WHERE firstname LIKE 'test%';`
-    ])
-    logger.debug('Cleanup successful!')
-    logger.debug('Stopping test environment ...')
-    await dockerTestEnv.down()
-    logger.debug('Docker Compose test environment stopped!')
+      if (dbContainer) {
+        const dbName = testEnvVariables.DB_DATABASE_NAME
+        const rootPassword = testEnvVariables.DB_ROOT_PASSWORD
+
+        await dbContainer.exec([
+          'mysql', 
+          '-u', 'root', 
+          `--password=${rootPassword}`, 
+          '-e', `DELETE FROM ${dbName}.wallet WHERE customer_id IN (SELECT customer_id FROM ${dbName}.customer WHERE firstname LIKE 'test%');`
+        ])
+        await dbContainer.exec([
+          'mysql', 
+          '-u', 'root', 
+          `--password=${rootPassword}`, 
+          '-e', `DELETE FROM ${dbName}.customer WHERE firstname LIKE 'test%';`
+        ])
+        logger.debug('Database cleanup successful!')
+      } else {
+        logger.warn('Skipping database cleanup as DB container was not found.')
+      }
+    } catch (cleanupError) {
+      logger.warn(`Database cleanup failed (skipping): ${cleanupError}`)
+    }
+
+    // This section MUST always run to free up ports
+    try {
+      logger.debug('Stopping test environment ...')
+      await dockerTestEnv.down()
+      logger.debug('Docker Compose test environment stopped!')
+    } catch (downError) {
+      logger.error(`Failed to bring down Docker Compose environment: ${downError}`)
+    }
 
     // Fix permissions of coverage files (they are owned by root from the container)
     // We use a temporary container to chmod them so the host user can read/modify them

@@ -2,7 +2,7 @@
 const apiDocumentation = {
   swagger: '2.0',
   host: `${process.env.API_HOST || 'localhost'}:${process.env.API_PORT || '8080'}`,
-  basePath: `${process.env.API_BASEPATH || '/api/v1'}`,
+  basePath: `${process.env.API_BASEPATH || '/api'}`,
   info: {
     title: 'rest_api_backend_user_esm_dev ',
     version: '0.0.0.dev'

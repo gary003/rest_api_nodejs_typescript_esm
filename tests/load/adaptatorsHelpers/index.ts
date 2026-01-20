@@ -8,7 +8,7 @@ type outputType = {
 }
 
 /**
- * Parse autocannon output to extract performance metrics
+ * Parse autocannon output to extract load metrics
  */
 export const parseAutocannonOutput = (output: string): outputType => {
   try {

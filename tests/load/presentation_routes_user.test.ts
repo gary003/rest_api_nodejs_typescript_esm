@@ -1,6 +1,5 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 
-import path from 'node:path'
 import { exec } from 'node:child_process'
 import { promisify } from 'node:util'
 
@@ -12,7 +11,7 @@ const execAsync = promisify(exec)
 
 const timeoutTest = 120 * 1000
 
-describe('Performance tests - presentation:routes:user', () => {
+describe('Load tests - presentation:routes:user', () => {
   // Dont accidentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
@@ -28,7 +27,7 @@ describe('Performance tests - presentation:routes:user', () => {
 
   // Use the environment variables set in vitest.setup.ts
   const {appUrl, dbUriTest} = getTestUrls()
-  const urlBase: string = 'api/v1'
+  const urlBase: string = 'api'
 
   // logger.debug(`dbUriTest: ${dbUriTest}, appUrl: ${appUrl}`)
   // logger.debug(`urlBase: ${urlBase}`)
@@ -41,7 +40,7 @@ describe('Performance tests - presentation:routes:user', () => {
 
   beforeAll(async () => {
     try {
-      const url = path.join(appUrl, urlBase, 'user')
+      const url = `${appUrl}/${urlBase}/user`
       // logger.debug(`url: ${url}`)
       const response = await fetch(url)
       

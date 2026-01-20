@@ -22,7 +22,7 @@ describe('Integration tests - presentation:routes:user', () => {
   let testUserId1: string = ''
   let testUserId2: string = ''
 
-  const urlBase: string = 'api/v1'
+  const urlBase: string = 'api'
 
   // Use the environment variables set in vitest.setup.ts to get the db uri
   const { appUrl, dbUriTest } = getTestUrls()
@@ -123,7 +123,7 @@ describe('Integration tests - presentation:routes:user', () => {
     it('should fail returning a single user ( wrong parameter in route )', async () => {
       const wrongUserId = 123
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/${wrongUserId}`)
+      const response = await fetch(`${appUrl}/${urlBase}/user/${String(wrongUserId)}`)
 
       const body = await response.json()
 
@@ -150,7 +150,8 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
+      const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +171,8 @@ describe('Integration tests - presentation:routes:user', () => {
         // missing other required fields
       }
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
+      const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +199,8 @@ describe('Integration tests - presentation:routes:user', () => {
         amount: -100
       }
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
+      const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -219,7 +222,8 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
+      const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +246,8 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
+      const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -266,7 +271,8 @@ describe('Integration tests - presentation:routes:user', () => {
 
       const token = jwt.sign(stdUser, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: 30 })
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/${testUserId1}`
+      const response = await fetch(urlToFetch, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -290,7 +296,8 @@ describe('Integration tests - presentation:routes:user', () => {
 
       const token = jwt.sign(adminUser, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: 30 })
 
-      const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`, {
+      const urlToFetch = `${appUrl}/${urlBase}/user/${testUserId1}`
+      const response = await fetch(urlToFetch, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
