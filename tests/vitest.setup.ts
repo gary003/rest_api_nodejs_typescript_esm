@@ -1,5 +1,8 @@
 import logger from '../src/v1/helpers/logger'
 import { Wait, DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment } from 'testcontainers'
+import fs from 'node:fs'
+import path from 'node:path'
+import { execSync } from 'node:child_process'
 
 /** 
  * @description Path to the docker-compose file
@@ -112,6 +115,51 @@ export const teardown = async (): Promise<void> => {
     logger.debug('Stopping test environment ...')
     await dockerTestEnv.down()
     logger.debug('Docker Compose test environment stopped!')
+
+    // Fix permissions of coverage files (they are owned by root from the container)
+    // We use a temporary container to chmod them so the host user can read/modify them
+    if (fs.existsSync(path.resolve(process.cwd(), 'coverage/tmp'))) {
+      try {
+        const coveragePath = path.resolve(process.cwd(), 'coverage/tmp')
+        logger.debug(`Fixing permissions for ${coveragePath}...`)
+        execSync(`docker run --rm -v "${coveragePath}":/data alpine chmod -R 777 /data`)
+      } catch (err) {
+        logger.error(`Failed to fix permissions: ${err}`)
+      }
+    }
+
+    // Fix coverage paths in the generated V8 coverage files from the container
+    // We mount ./coverage/tmp to /app/coverage/tmp in docker-compose.yaml
+    const coverageDir = path.resolve(process.cwd(), 'coverage/tmp')
+    
+    if (fs.existsSync(coverageDir)) {
+      logger.debug(`Processing coverage files in ${coverageDir} ...`)
+      const files = fs.readdirSync(coverageDir)
+      
+      let processedCount = 0
+      for (const file of files) {
+        if (! file.endsWith('.json')) continue
+
+        const filePath = path.join(coverageDir, file)
+        try {
+          const content = fs.readFileSync(filePath, 'utf-8')
+          // Replace container path '/app/' with local project root path
+          // This maps /app/dist/... -> <cwd>/dist/...
+          // Since we enabled source maps in tsconfig.json and built locally with 'npm run build:app',
+          // c8/vitest should be able to map dist/ files back to src/ files.
+          const newContent = content.replaceAll('/app/', process.cwd() + '/')
+          
+          // Only write back if changes were made to avoid touching timestamps unnecessarily (though mostly harmless)
+          if (content !== newContent) {
+            fs.writeFileSync(filePath, newContent)
+            processedCount++
+          }
+        } catch (err) {
+          logger.error(`Failed to process coverage file ${file}: ${err}`)
+        }
+      }
+      logger.debug(`Processed ${processedCount} coverage files from container.`)
+    }
   } catch (error) {
     logger.error(`Error during Docker Compose teardown: ${error}`)
     throw new Error(`error during Docker Compose teardown: ${error}`) // Fail the tests if teardown fails

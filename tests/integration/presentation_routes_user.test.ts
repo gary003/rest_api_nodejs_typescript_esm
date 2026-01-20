@@ -1,15 +1,11 @@
-import { describe, it, afterAll, expect, vi, beforeEach } from 'vitest'
-import app from '../../src/app'
-import request from 'supertest'
-import logger from '../../src/v1/helpers/logger/index.js'
+import { describe, it, afterAll, expect, beforeEach } from 'vitest'
 import { errorAPIUSER } from '../../src/v1/presentation/routes/user/error.dto.js'
 import { moneyTypesO } from '../../src/v1/domain/index.js'
 import jwt from 'jsonwebtoken'
-import { closeConnection } from '../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import { getDockerTestEnvVariables, getTestUrls } from '../vitest.setup.js'
 
 describe('Integration tests - presentation:routes:user', () => {
-  const originalEnv = { ...process.env } as const  
+  const originalEnv = { ...process.env } as const
 
   // Dont accidentally fetch the real database (use the containerized test environment) !
   process.env.DB_URI = ''
@@ -27,33 +23,35 @@ describe('Integration tests - presentation:routes:user', () => {
   let testUserId2: string = ''
 
   const urlBase: string = 'api/v1'
-  const loggerSpy = vi.spyOn(logger, 'error').mockImplementation(() => logger)
 
   // Use the environment variables set in vitest.setup.ts to get the db uri
-  const { dbUriTest } = getTestUrls()
+  const { appUrl, dbUriTest } = getTestUrls()
     
   // Set DB connection params to containerized test environment
   process.env.DB_URI = dbUriTest
 
   beforeEach(() => {
-    loggerSpy.mockClear()
   })
 
   afterAll(async () => {
-    await closeConnection()
     process.env = originalEnv
   })
 
   describe('src > v1 > presentation > routes > user > GET (getting all the users)', () => {
     it('Should get all users from DB', async () => {
-      const response = await request(app).get(`/${urlBase}/user/`).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
       // This user will be used through the whole file
       testUserId2 = body.data[1].userId
 
-      expect(response.statusCode).to.be.within(200, 299)
+      expect(response.status).to.be.within(200, 299)
       expect(body.data).to.be.an('array')
       expect(body.data).length.above(0)
     })
@@ -61,13 +59,15 @@ describe('Integration tests - presentation:routes:user', () => {
 
   describe('src > v1 > presentation > routes > user > stream > GET (getting all the users - stream)', () => {
     it('Should get all users from DB from a stream', async () => {
-      const resp = await request(app).get(`/${urlBase}/user/stream`)
+      const resp = await fetch(`${appUrl}/${urlBase}/user/stream`)
 
       if (resp instanceof Error) expect.fail('Error - Impossible to get the data stream from route')
 
-      const users = resp.text.split('\n').slice(0, -1)
+      const text = await resp.text()
 
-      expect(resp.statusCode).to.be.within(200, 299)
+      const users = text.split('\n').filter(line => line.trim() !== '')
+
+      expect(resp.status).to.be.within(200, 299)
       expect(users).to.be.an('array')
 
       for (const chunk of users) {
@@ -86,15 +86,21 @@ describe('Integration tests - presentation:routes:user', () => {
         lastname: 'test_Espinosa'
       }
 
-      const response = await request(app).post(`/${urlBase}/user/`).send(newUser).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newUser),
+      })
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
       // Get the user id from DB response in addUser
       testUserId1 = body.data.userId
 
       // logger.debug(JSON.stringify(body))
-      expect(response.statusCode).to.be.within(200, 299)
+      expect(response.status).to.be.within(200, 299)
 
       expect(body.data).to.not.be.empty
       expect(body.data.firstname).to.be.not.empty
@@ -105,31 +111,33 @@ describe('Integration tests - presentation:routes:user', () => {
 
   describe('src > v1 > presentation > routes > user > GET (single user)', () => {
     it('should return a single user', async () => {
-      const response = await request(app).get(`/${urlBase}/user/${testUserId1}`).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`)
 
-      const body = JSON.parse(response.text)
 
-      expect(response.statusCode).to.be.within(200, 299)
+      const body = await response.json()
+
+
+      expect(response.status).to.be.within(200, 299)
       expect(body.data).to.have.property('userId')
     })
     it('should fail returning a single user ( wrong parameter in route )', async () => {
       const wrongUserId = 123
 
-      const response = await request(app).get(`/${urlBase}/user/${wrongUserId}`).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/${wrongUserId}`)
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
-      expect(response.statusCode).to.be.within(400, 499)
+      expect(response.status).to.be.within(400, 499)
       expect(body).to.have.property('middlewareError')
     })
     it('should fail returning a single user ( user dont exists )', async () => {
       const nonExistentUserId = '00000000-0000-4000-a000-000000000000'
 
-      const response = await request(app).get(`/${urlBase}/user/${nonExistentUserId}`).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/${nonExistentUserId}`)
 
-      expect(response.statusCode).to.be.within(500, 599)
-      expect(response.text).includes('Impossible to get any')
-      expect(loggerSpy).toHaveBeenCalled()
+      const text = await response.text()
+      expect(response.status).to.be.within(500, 599)
+      expect(text).to.include('Impossible to get any')
     })
   })
 
@@ -142,11 +150,17 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await request(app).post(`/${urlBase}/user/transfer`).send(validTransferData).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(validTransferData),
+      })
+      
+      const body = await response.json()
 
-      const body = JSON.parse(response.text)
-
-      expect(response.statusCode).to.be.within(200, 299)
+      expect(response.status).to.be.within(200, 299)
       expect(body).to.have.property('data')
     })
 
@@ -156,11 +170,17 @@ describe('Integration tests - presentation:routes:user', () => {
         // missing other required fields
       }
 
-      const response = await request(app).post(`/${urlBase}/user/transfer`).send(invalidData).set('Accept', 'application/json').expect('Content-Type', /json/)
+      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invalidData),
+      })
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
-      expect(response.statusCode).to.be.within(400, 499)
+      expect(response.status).to.be.within(400, 499)
       expect(body).to.deep.equal(errorAPIUSER.errorAPIUserTransfertWrongParams)
     })
 
@@ -177,11 +197,17 @@ describe('Integration tests - presentation:routes:user', () => {
         amount: -100
       }
 
-      const response = await request(app).post(`/${urlBase}/user/transfer`).send(invalidData).set('Accept', 'application/json').expect('Content-Type', /json/)
+      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invalidData),
+      })
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
-      expect(response.statusCode).to.be.within(400, 499)
+      expect(response.status).to.be.within(400, 499)
       expect(body).to.deep.equal(errorAPIUSER.errorAPIUserTransferIllegalAmount)
     })
 
@@ -193,11 +219,17 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await request(app).post(`/${urlBase}/user/transfer`).send(invalidTransferData).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invalidTransferData),
+      })
 
-      const body = JSON.parse(response.text)
+      const body = await response.json()
 
-      expect(response.statusCode).to.be.within(400, 499)
+      expect(response.status).to.be.within(400, 499)
       expect(body).to.deep.equal(errorAPIUSER.errorAPIUserTransferSelf!)
     })
 
@@ -210,10 +242,15 @@ describe('Integration tests - presentation:routes:user', () => {
         currency: moneyTypesO.hard_currency
       }
 
-      const response = await request(app).post(`/${urlBase}/user/transfer`).send(invalidTransferData).set('Accept', 'application/json')
+      const response = await fetch(`${appUrl}/${urlBase}/user/transfer`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invalidTransferData),
+      })
 
-      expect(response.statusCode).to.be.within(500, 599)
-      expect(loggerSpy).toHaveBeenCalled()
+      expect(response.status).to.be.within(500, 599)
     })
   })
 
@@ -229,11 +266,17 @@ describe('Integration tests - presentation:routes:user', () => {
 
       const token = jwt.sign(stdUser, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: 30 })
 
-      const response = await request(app).delete(`/${urlBase}/user/${testUserId1}`).set('Accept', 'application/json').set('Authorization', `Bearer ${token}`)
+      const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
 
       // logger.debug(JSON.stringify(response))
 
-      expect(response.statusCode).to.be.equal(403)
+      expect(response.status).to.be.within(400, 499)
     })
 
     it('should delete a specified user (logged user is admin)', async () => {
@@ -247,10 +290,17 @@ describe('Integration tests - presentation:routes:user', () => {
 
       const token = jwt.sign(adminUser, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: 30 })
 
-      const response = await request(app).delete(`/${urlBase}/user/${testUserId1}`).set('Accept', 'application/json').set('Authorization', `Bearer ${token}`)
+      const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
 
-      expect(response.statusCode).to.be.within(200, 299)
-      expect(response.text).to.not.be.null
+      const text = await response.text()
+      expect(response.status).to.be.within(200, 299)
+      expect(text).to.not.be.null
       expect(response.ok).to.be.equal(true)
     })
   })

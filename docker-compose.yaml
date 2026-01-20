@@ -41,7 +41,10 @@ services:
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-secret}
       - JWT_REFRESH_SECRET_KEY=${JWT_REFRESH_SECRET_KEY:-refresh_secret}
+      - NODE_V8_COVERAGE=/app/coverage/tmp
     restart: always
+    volumes:
+      - ./coverage/tmp:/app/coverage/tmp
     networks:
       - my_app_network
       - my_db_network
