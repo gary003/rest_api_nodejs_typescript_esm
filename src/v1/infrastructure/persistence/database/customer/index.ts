@@ -101,7 +101,7 @@ export const saveNewCustomerDB = async (firstname: string, lastname: string) => 
     throw new Error(`Impossible to create a new wallet or customer - ${String(walletCreation)}`)
   }
 
-  return {newCustomer, walletCreation} // Return the new customer
+  return { newCustomer, walletCreation } // Return the new customer
 }
 
 // Delete a customer and their associated wallet from the database

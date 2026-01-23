@@ -66,12 +66,12 @@ export const saveNewUser = async (firstname: string, lastname: string): Promise<
 
   if (newCustomerInfo instanceof Error) {
     // Log and throw an error if user creation fails
-    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser?.message} \n databaseError: ${String({newCustomerInfo})}`
+    const saveError = `serviceError: ${userFunctionsErrors.ErrorCreatingUser?.message} \n databaseError: ${String({ newCustomerInfo })}`
     logger.error(saveError)
     throw new Error(saveError)
   }
 
-  const {newCustomer, walletCreation} = newCustomerInfo
+  const { newCustomer, walletCreation } = newCustomerInfo
 
   const newUser = {
     userId: newCustomer.customer_id,

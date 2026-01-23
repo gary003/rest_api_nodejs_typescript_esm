@@ -116,7 +116,7 @@ describe('Unit tests - presentation:middlewares', () => {
       } as unknown as Response
 
       const nextFunction = vi.fn()
-      
+
       // Mock jwt.verify to return mockUser
       vi.mocked(jwt.verify).mockImplementation(() => mockUser)
 
@@ -182,7 +182,9 @@ describe('Unit tests - presentation:middlewares', () => {
 
       // Stub jwt.verify to throw TokenExpiredError
       const tokenExpiredError = new jwt.TokenExpiredError('Token expired', expiredAt)
-      vi.mocked(jwt.verify).mockImplementation(() => { throw tokenExpiredError })
+      vi.mocked(jwt.verify).mockImplementation(() => {
+        throw tokenExpiredError
+      })
 
       // Act
       isAuthorized(mockRequest, mockResponse, nextFunction)
@@ -221,7 +223,9 @@ describe('Unit tests - presentation:middlewares', () => {
 
       // Stub jwt.verify to throw JsonWebTokenError
       const jsonWebTokenError = new jwt.JsonWebTokenError('Invalid token')
-      vi.mocked(jwt.verify).mockImplementation(() => { throw jsonWebTokenError })
+      vi.mocked(jwt.verify).mockImplementation(() => {
+        throw jsonWebTokenError
+      })
 
       // Act
       isAuthorized(mockRequest, mockResponse, nextFunction)
@@ -259,7 +263,9 @@ describe('Unit tests - presentation:middlewares', () => {
       const nextFunction = vi.fn()
 
       // Stub jwt.verify to throw generic error
-      vi.mocked(jwt.verify).mockImplementation(() => { throw new Error('Unexpected error') })
+      vi.mocked(jwt.verify).mockImplementation(() => {
+        throw new Error('Unexpected error')
+      })
 
       // Act
       isAuthorized(mockRequest, mockResponse, nextFunction)

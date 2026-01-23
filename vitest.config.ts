@@ -18,7 +18,7 @@ export default defineConfig({
         '**/*.db',
         '**/db_file_volume/**',
         '**/sqlite/**'
-      ],
+      ]
       // thresholds: {
       //   branches: 80,
       //   lines: 80,

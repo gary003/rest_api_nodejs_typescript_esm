@@ -12,29 +12,6 @@ env:
   NODE_VERSION: 24
   DOCKER_IMAGE: gary003/rest_api_nodejs_typescript_esm
   DOCKER_TAG: latest
-  NODE_ENV: test
-  API_VERSION: "1"
-  API_SCHEME: http
-  API_HOST: localhost
-  API_PORT: 8080
-  API_BASEPATH: /api
-  LOGLEVEL: debug
-  DB_DRIVER: mysql
-  DB_HOST: db
-  DB_PORT: 3306
-  DB_DATABASE_NAME: mydb
-  DB_USERNAME: mysql
-  DB_PASSWORD: mypass
-  DB_ROOT_PASSWORD: StrongRootPassword123!
-  DB_URI: mysql://mysql:mypass@db:3306/mydb
-  REDIS_URL: redis://redis:6379
-  CRYPTO_SECRET_KEY: 4876he526d9148b7ac40bd623b240753
-  JWT_SECRET_KEY: secret
-  JWT_REFRESH_SECRET_KEY: refresh_secret
-  OTEL_TRACE_EXPORTER_ENDPOINT: http://otel-collector:4318/v1/traces
-  OTEL_METRIC_EXPORTER_ENDPOINT: http://otel-collector:4318/v1/metrics
-  GF_AUTH_ANONYMOUS_ENABLED: "true"
-  GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
 
 jobs:
   security-scan:
@@ -90,7 +67,7 @@ jobs:
 
       # Start application for DAST
       - name: Start application
-        run: npm run start --wait && echo "Application started successfully" || exit 1  
+        run: npm run start --wait && echo "Application started successfully" || exit 1
         env:
           NODE_ENV: ${{ env.NODE_ENV }}
           API_VERSION: ${{ env.API_VERSION }}
@@ -126,7 +103,7 @@ jobs:
           fail_action: false
           artifact_name: 'zap-scan-results'
         continue-on-error: true
-      
+
       # Upload ZAP reports manually with unique name
       - name: Upload ZAP Scan Results
         if: always()
@@ -274,7 +251,7 @@ jobs:
       - name: Test Docker image
         run: |
           docker run --rm -d -p 8080:8080 --name test-container ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
-          
+
           # Wait for container to be ready
           timeout=30
           counter=0
@@ -283,14 +260,14 @@ jobs:
             sleep 2
             counter=$((counter + 2))
           done
-          
+
           if [ $counter -eq $timeout ]; then
             echo "Container failed to start"
             docker logs test-container
             docker stop test-container
             exit 1
           fi
-          
+
           echo "Container is ready"
           docker stop test-container
 

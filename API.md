@@ -40,9 +40,9 @@ The API uses **JWT (JSON Web Tokens)** for protected routes.
 ## 5. Standard Responses
 
 {
-  "status": "error",
-  "message": "Human readable error message",
-  "code": "ERROR_CODE"
+"status": "error",
+"message": "Human readable error message",
+"code": "ERROR_CODE"
 }
 
 ## 6. Error Codes
@@ -55,4 +55,4 @@ The API uses **JWT (JSON Web Tokens)** for protected routes.
 
 ---
 
-*Note: For detailed parameter definitions and schemas, refer to the [Swagger Documentation](http://localhost:8080).*
+_Note: For detailed parameter definitions and schemas, refer to the [Swagger Documentation](http://localhost:8080)._

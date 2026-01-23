@@ -19,10 +19,10 @@ The architecture intentionally favors **clarity and correctness over premature a
 ## Clean Architecture Layers
 
 src/v1/
- ├─ presentation/   → HTTP layer (Controllers, Routes, DTOs, Middlewares)
- ├─ services/       → Pure Business Logic
- ├─ domain/         → Entities, Value Objects, Aggregates
- └─ infrastructure/ → External Tools (Database, Redis, Logger, Observability)
+├─ presentation/ → HTTP layer (Controllers, Routes, DTOs, Middlewares)
+├─ services/ → Pure Business Logic
+├─ domain/ → Entities, Value Objects, Aggregates
+└─ infrastructure/ → External Tools (Database, Redis, Logger, Observability)
 
 1. **Domain**: The core of the application. Contains entities and business rules. No dependencies on frameworks or libraries.
 2. **Application**: Coordinates tasks and delegates work to the domain.
@@ -35,11 +35,11 @@ src/v1/
 
 The system behaves differently depending on the environment, by design.
 
-| Environment | Database | Driver | Purpose |
-| :--- | :--- | :--- | :--- |
-| `dev` | SQLite | `sqlite3` | Fast local development, zero setup |
-| `test` | MySQL | `mysql2` | Integration tests in Docker containers |
-| `prod` | MySQL | `mysql2` | Production environment |
+| Environment | Database | Driver    | Purpose                                |
+| :---------- | :------- | :-------- | :------------------------------------- |
+| `dev`       | SQLite   | `sqlite3` | Fast local development, zero setup     |
+| `test`      | MySQL    | `mysql2`  | Integration tests in Docker containers |
+| `prod`      | MySQL    | `mysql2`  | Production environment                 |
 
 ---
 

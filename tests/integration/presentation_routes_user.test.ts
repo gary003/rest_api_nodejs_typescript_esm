@@ -16,7 +16,7 @@ describe('Integration tests - presentation:routes:user', () => {
 
   // Modify the current environment variables with the test environment variables
   // The db needs the env variables to create the uri
-  process.env = {...process.env, ...test_env}
+  process.env = { ...process.env, ...test_env }
 
   // This is test user ids  use through all tests (as recipient and giver for money transfer tests)
   let testUserId1: string = ''
@@ -26,12 +26,11 @@ describe('Integration tests - presentation:routes:user', () => {
 
   // Use the environment variables set in vitest.setup.ts to get the db uri
   const { appUrl, dbUriTest } = getTestUrls()
-    
+
   // Set DB connection params to containerized test environment
   process.env.DB_URI = dbUriTest
 
-  beforeEach(() => {
-  })
+  beforeEach(() => {})
 
   afterAll(async () => {
     process.env = originalEnv
@@ -42,8 +41,8 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(`${appUrl}/${urlBase}/user/`, {
         method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
-        },
+          'Content-Type': 'application/json'
+        }
       })
 
       const body = await response.json()
@@ -65,7 +64,7 @@ describe('Integration tests - presentation:routes:user', () => {
 
       const text = await resp.text()
 
-      const users = text.split('\n').filter(line => line.trim() !== '')
+      const users = text.split('\n').filter((line) => line.trim() !== '')
 
       expect(resp.status).to.be.within(200, 299)
       expect(users).to.be.an('array')
@@ -89,9 +88,9 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(`${appUrl}/${urlBase}/user/`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newUser),
+        body: JSON.stringify(newUser)
       })
 
       const body = await response.json()
@@ -113,9 +112,7 @@ describe('Integration tests - presentation:routes:user', () => {
     it('should return a single user', async () => {
       const response = await fetch(`${appUrl}/${urlBase}/user/${testUserId1}`)
 
-
       const body = await response.json()
-
 
       expect(response.status).to.be.within(200, 299)
       expect(body.data).to.have.property('userId')
@@ -154,11 +151,11 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(validTransferData),
+        body: JSON.stringify(validTransferData)
       })
-      
+
       const body = await response.json()
 
       expect(response.status).to.be.within(200, 299)
@@ -175,9 +172,9 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invalidData),
+        body: JSON.stringify(invalidData)
       })
 
       const body = await response.json()
@@ -203,9 +200,9 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invalidData),
+        body: JSON.stringify(invalidData)
       })
 
       const body = await response.json()
@@ -226,9 +223,9 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invalidTransferData),
+        body: JSON.stringify(invalidTransferData)
       })
 
       const body = await response.json()
@@ -250,9 +247,9 @@ describe('Integration tests - presentation:routes:user', () => {
       const response = await fetch(urlToFetch, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(invalidTransferData),
+        body: JSON.stringify(invalidTransferData)
       })
 
       expect(response.status).to.be.within(500, 599)
@@ -276,8 +273,8 @@ describe('Integration tests - presentation:routes:user', () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       })
 
       // logger.debug(JSON.stringify(response))
@@ -301,8 +298,8 @@ describe('Integration tests - presentation:routes:user', () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+          Authorization: `Bearer ${token}`
+        }
       })
 
       const text = await response.text()

@@ -1,4 +1,3 @@
-
 const apiDocumentation = {
   swagger: '2.0',
   host: `${process.env.API_HOST || 'localhost'}:${process.env.API_PORT || '8080'}`,

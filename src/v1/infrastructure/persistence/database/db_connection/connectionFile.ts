@@ -9,8 +9,6 @@ export type transactionQueryRunnerType = QueryRunner
 // This is the permanent connection to the DB that will be reuse through the whole app cycle
 let connection: DataSource | null = null
 
-
-
 /**
  * Connects to the database with retry logic for transient failures.
  * @param {number} currentAttempt - The current retry attempt (default: 1).
@@ -44,13 +42,13 @@ export const connectionDB = async (currentAttempt: number = 1, maxAttempts: numb
  */
 export const getConnection = async (): Promise<DataSource> => {
   if (connection && connection.isInitialized) return connection // Return existing connection if available
- 
+
   const newConnection = await connectionDB().catch((err) => {
     const errorMessage = `Failed to establish database connection - ${String(err)}`
     logger.error(errorMessage)
     throw new Error(errorMessage)
   })
- 
+
   connection = newConnection // Cache the connection
   return connection // Return the new connection
 }

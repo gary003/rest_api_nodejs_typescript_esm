@@ -23,8 +23,8 @@ describe('Unit tests - infrastructure:database:customer', () => {
   // Dont accidentially use real DB
   process.env.DB_URI = ''
   process.env.DB_HOST = ''
-  
-  afterAll(() => { 
+
+  afterAll(() => {
     process.env = originalEnv
   })
 

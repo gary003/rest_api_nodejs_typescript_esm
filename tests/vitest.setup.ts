@@ -4,21 +4,21 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 
-/** 
+/**
  * @description Path to the docker-compose file
  * @type {string}
-**/ 
+ **/
 const composeFilePath: string = '.'
-/** 
+/**
  * @description Name of the docker-compose file
  * @type {string}
-**/ 
+ **/
 const composeFile: string = 'docker-compose.yaml'
 
-/** 
+/**
  * @description In a real project, you would use a .env file for environment variables
  * @type {Object}
-**/ 
+ **/
 export const getDockerTestEnvVariables = (): Record<string, string> => {
   return {
     APP_HOST: 'localhost',
@@ -36,24 +36,24 @@ export const getDockerTestEnvVariables = (): Record<string, string> => {
   }
 }
 
-/** 
+/**
  * @description Global variable to store the test environment
  * @type {StartedDockerComposeEnvironment | null}
-**/ 
+ **/
 let globalDockerTestEnv: StartedDockerComposeEnvironment | null = null
 
-/** 
+/**
  * @description Vitest global setup function (only launches the dockerized test environment once)
  * @returns {Promise<void>}
-**/ 
+ **/
 export const setup = async (): Promise<void> => {
   logger.debug('Starting Vitest Global Setup - Initializing Docker Compose (with testcontainers) ...')
-  
+
   const testEnvVariables = getDockerTestEnvVariables()
 
   logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
   logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
-  
+
   try {
     globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
       .withBuild()
@@ -61,8 +61,8 @@ export const setup = async (): Promise<void> => {
       .withEnvironment(testEnvVariables)
       .withWaitStrategy('db', Wait.forHealthCheck())
       .withWaitStrategy('app', Wait.forHealthCheck())
-      .up(['app','db'])
-    
+      .up(['app', 'db'])
+
     logger.debug('Docker Compose test environment is ready!')
   } catch (error) {
     logger.error(`Failed to start Docker Compose environment: ${error}`)
@@ -71,11 +71,11 @@ export const setup = async (): Promise<void> => {
 }
 
 /**
- * @description 
+ * @description
  * Get test URLs
  * Those urls are built from the test environment variables to fetch the according services in the isolated dockerized test environment.
  * @returns {Record<string, string>} - Object containing test URLs to fetch the testing environment
-**/ 
+ **/
 export const getTestUrls = (testEnvVariables = getDockerTestEnvVariables()): Record<string, string> => {
   return {
     appUrl: `http://${testEnvVariables.APP_HOST}:${testEnvVariables.APP_PORT}`,
@@ -92,16 +92,16 @@ export const getTestUrls = (testEnvVariables = getDockerTestEnvVariables()): Rec
 const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
   // Try common container name patterns
   const candidateNames = ['db', 'db-1']
-  
+
   for (const name of candidateNames) {
     try {
       return dockerTestEnv.getContainer(name)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
       // Container not found with this name, try next
     }
   }
-  
+
   // Last resort: wildcard search in internal containers map
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const env = dockerTestEnv as any
@@ -111,14 +111,14 @@ const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
   execSync('docker compose ps && docker compose logs db', { stdio: 'inherit' })
 
   const dbKey = Object.keys(containers).find((key: string) => key.includes('db'))
-  
+
   return dbKey ? containers[dbKey] : undefined
 }
 
 /**
  * @description Vitest global teardown function
  * @returns {Promise<void>}
-**/ 
+ **/
 export const teardown = async (): Promise<void> => {
   const dockerTestEnv = globalDockerTestEnv
   if (!dockerTestEnv) return
@@ -137,17 +137,14 @@ export const teardown = async (): Promise<void> => {
         const rootPassword = testEnvVariables.DB_ROOT_PASSWORD
 
         await dbContainer.exec([
-          'mysql', 
-          '-u', 'root', 
-          `--password=${rootPassword}`, 
-          '-e', `DELETE FROM ${dbName}.wallet WHERE customer_id IN (SELECT customer_id FROM ${dbName}.customer WHERE firstname LIKE 'test%');`
+          'mysql',
+          '-u',
+          'root',
+          `--password=${rootPassword}`,
+          '-e',
+          `DELETE FROM ${dbName}.wallet WHERE customer_id IN (SELECT customer_id FROM ${dbName}.customer WHERE firstname LIKE 'test%');`
         ])
-        await dbContainer.exec([
-          'mysql', 
-          '-u', 'root', 
-          `--password=${rootPassword}`, 
-          '-e', `DELETE FROM ${dbName}.customer WHERE firstname LIKE 'test%';`
-        ])
+        await dbContainer.exec(['mysql', '-u', 'root', `--password=${rootPassword}`, '-e', `DELETE FROM ${dbName}.customer WHERE firstname LIKE 'test%';`])
         logger.debug('Database cleanup successful!')
       } else {
         logger.warn('Skipping database cleanup as DB container was not found.')
@@ -180,14 +177,14 @@ export const teardown = async (): Promise<void> => {
     // Fix coverage paths in the generated V8 coverage files from the container
     // We mount ./coverage/tmp to /app/coverage/tmp in docker-compose.yaml
     const coverageDir = path.resolve(process.cwd(), 'coverage/tmp')
-    
+
     if (fs.existsSync(coverageDir)) {
       logger.debug(`Processing coverage files in ${coverageDir} ...`)
       const files = fs.readdirSync(coverageDir)
-      
+
       let processedCount = 0
       for (const file of files) {
-        if (! file.endsWith('.json')) continue
+        if (!file.endsWith('.json')) continue
 
         const filePath = path.join(coverageDir, file)
         try {
@@ -197,7 +194,7 @@ export const teardown = async (): Promise<void> => {
           // Since we enabled source maps in tsconfig.json and built locally with 'npm run build:app',
           // c8/vitest should be able to map dist/ files back to src/ files.
           const newContent = content.replaceAll('/app/', process.cwd() + '/')
-          
+
           // Only write back if changes were made to avoid touching timestamps unnecessarily (though mostly harmless)
           if (content !== newContent) {
             fs.writeFileSync(filePath, newContent)

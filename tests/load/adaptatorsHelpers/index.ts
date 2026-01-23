@@ -15,7 +15,7 @@ export const parseAutocannonOutput = (output: string): outputType => {
     // Try to find the JSON part of the output (in case there's other text)
     const jsonMatch = output.match(/\{[\s\S]*\}/)
     if (!jsonMatch) throw new Error('No JSON found in output')
-    
+
     const results = JSON.parse(jsonMatch[0])
     return {
       totalRequests: results.requests.total,

@@ -20,7 +20,7 @@ The application uses **Helmet** to set secure HTTP headers:
 - X-Powered-By disabled
 
 ```typescript
-app.use(helmet());
+app.use(helmet())
 ```
 
 ## CI/CD Security Scanning (DevSecOps)

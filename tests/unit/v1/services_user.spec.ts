@@ -188,9 +188,7 @@ describe('Unit tests - services:user', () => {
         }
       }
 
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       const amount = 100
 
@@ -222,9 +220,7 @@ describe('Unit tests - services:user', () => {
         }
       }
 
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       const invalidCurrency = 'invalid_currency'
       const amount = 100
@@ -264,9 +260,7 @@ describe('Unit tests - services:user', () => {
         }
       }
 
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       const amount = 200 // Attempt to transfer more than available
 
@@ -294,9 +288,7 @@ describe('Unit tests - services:user', () => {
         }
       }
 
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockRejectedValueOnce(new Error('test - 1'))
-        .mockRejectedValueOnce(null)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockRejectedValueOnce(new Error('test - 1')).mockRejectedValueOnce(null)
 
       const amount = 100
 
@@ -337,9 +329,7 @@ describe('Unit tests - services:user', () => {
         }
       }
 
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockRejectedValueOnce(new Error('DB Error'))
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockRejectedValueOnce(new Error('DB Error'))
 
       const amount = 100
 
@@ -364,13 +354,10 @@ describe('Unit tests - services:user', () => {
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
 
       // Mock getCustomerWalletInfoDB to return giver then recipient
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
-      
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true)
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
@@ -410,9 +397,7 @@ describe('Unit tests - services:user', () => {
       // Setup mocks for successful validation
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       // Mock transaction creation failure
       vi.mocked(modConnection.createAndStartTransaction).mockRejectedValue(new Error('Transaction Error'))
@@ -436,16 +421,11 @@ describe('Unit tests - services:user', () => {
       // Setup mocks for successful validation and transaction
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
 
       // Mock lock failure
-      vi.mocked(modConnection.acquireLockOnWallet)
-        .mockRejectedValueOnce(new Error('lock test Error'))
-        .mockResolvedValueOnce(true)
+      vi.mocked(modConnection.acquireLockOnWallet).mockRejectedValueOnce(new Error('lock test Error')).mockResolvedValueOnce(true)
 
       try {
         await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
@@ -466,16 +446,11 @@ describe('Unit tests - services:user', () => {
       // Setup mocks for successful validation and transaction
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
 
       // Mock lock failure for recipient
-      vi.mocked(modConnection.acquireLockOnWallet)
-        .mockResolvedValueOnce(true)
-        .mockRejectedValueOnce(new Error('lock test Error'))
+      vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValueOnce(true).mockRejectedValueOnce(new Error('lock test Error'))
 
       try {
         await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
@@ -500,20 +475,17 @@ describe('Unit tests - services:user', () => {
   // In Vitest/ESM, we can't stub internal calls easily.
   //
   // Workaround: We can mock the dependencies of transferMoney to simulate failure/success.
-  
+
   describe('src > v1 > services > user > index > transferMoneyWithRetry', () => {
     // Since we cannot mock transferMoney directly because it's an internal call,
     // we will mock the dependencies of transferMoney to simulate the scenarios.
-    
+
     it('Successful transfer (no retry)', async () => {
       // Mock dependencies to succeed
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true)
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
@@ -527,24 +499,16 @@ describe('Unit tests - services:user', () => {
       // Mock dependencies to fail once with Lock error, then succeed
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      
+
       // Attempt 1: Validation succeeds, Transaction succeeds, Lock fails (Error - Lock)
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValueOnce({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
-      vi.mocked(modConnection.acquireLockOnWallet)
-        .mockRejectedValueOnce(new Error('Error - Lock - Network error'))
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValueOnce({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+      vi.mocked(modConnection.acquireLockOnWallet).mockRejectedValueOnce(new Error('Error - Lock - Network error'))
 
       // Attempt 2: Succeeds
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValueOnce({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
-      vi.mocked(modConnection.acquireLockOnWallet)
-        .mockResolvedValue(true) // Subsequent calls succeed
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValueOnce({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+      vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true) // Subsequent calls succeed
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
       const result = await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 30)
@@ -557,10 +521,8 @@ describe('Unit tests - services:user', () => {
       // Mock dependencies to fail with non-retryable error (e.g. Insufficient Funds)
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 50 } } as userWalletDTO // Insufficient funds
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      
-      vi.mocked(modUserDB.getCustomerWalletInfoDB)
-        .mockResolvedValueOnce(fakeUserGiver)
-        .mockResolvedValueOnce(fakeUserRecipient)
+
+      vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       try {
         await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 300)
@@ -574,7 +536,7 @@ describe('Unit tests - services:user', () => {
       // Mock dependencies to always fail with Lock error
       const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
       const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
-      
+
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValue(fakeUserGiver) // Always return valid user
       // But we need to make sure we return different users for giver/recipient if needed, but here we can just reuse
       // Actually getCustomerWalletInfoDB is called twice per attempt.
@@ -584,11 +546,9 @@ describe('Unit tests - services:user', () => {
         return fakeUserRecipient
       })
 
-      vi.mocked(modConnection.createAndStartTransaction)
-        .mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
-      
-      vi.mocked(modConnection.acquireLockOnWallet)
-        .mockRejectedValue(new Error('Error - Lock - Network error'))
+      vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
+
+      vi.mocked(modConnection.acquireLockOnWallet).mockRejectedValue(new Error('Error - Lock - Network error'))
 
       const maxAttempt = 3
       const amountToTransfer = 100

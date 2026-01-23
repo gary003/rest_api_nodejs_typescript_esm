@@ -18,7 +18,7 @@ services:
       redis:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-s", "http://localhost:8080/api/health"]
+      test: ['CMD', 'curl', '-s', 'http://localhost:8080/api/health']
       interval: 5s
       timeout: 5s
       retries: 10

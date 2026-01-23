@@ -177,7 +177,7 @@ const apiDocumentation: OpenAPIObject = {
                 properties: {
                   refreshToken: {
                     type: 'string'
-                  } 
+                  }
                 }
               }
             }

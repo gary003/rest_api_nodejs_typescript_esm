@@ -53,7 +53,7 @@ describe('Unit tests - infrastructure:database:db_connection', () => {
       // Sequence: Fail once, then succeed
       vi.mocked(modConnector.tryToConnectDB).mockRejectedValueOnce(new Error('First attempt failed')).mockResolvedValueOnce(mockConnection)
 
-      const result = await connectionDB(1,4,20)
+      const result = await connectionDB(1, 4, 20)
 
       expect(modConnector.tryToConnectDB).toHaveBeenCalledTimes(2)
       expect(logger.warn).toHaveBeenCalledTimes(1)
@@ -70,7 +70,7 @@ describe('Unit tests - infrastructure:database:db_connection', () => {
         .mockRejectedValueOnce(new Error('Third attempt failed'))
         .mockResolvedValueOnce(mockConnection)
 
-      const result = await connectionDB(1,4,20)
+      const result = await connectionDB(1, 4, 20)
 
       expect(modConnector.tryToConnectDB).toHaveBeenCalledTimes(4)
       expect(logger.warn).toHaveBeenCalledTimes(3)
@@ -82,7 +82,7 @@ describe('Unit tests - infrastructure:database:db_connection', () => {
       vi.mocked(modConnector.tryToConnectDB).mockRejectedValue(testError)
 
       try {
-        await connectionDB(1,4,20)
+        await connectionDB(1, 4, 20)
         expect.fail('Should have thrown an error')
       } catch (err) {
         expect(err).toBeDefined()

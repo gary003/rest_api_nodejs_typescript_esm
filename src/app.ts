@@ -50,12 +50,11 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 
 if (process.env.NODE_ENV !== 'production') {
   // openAPI V2
-  if(process.env.NODE_ENV === 'development')
-    app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation))
-  else// openAPI V3
-    app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
+  if (process.env.NODE_ENV === 'development')
+    app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(apiDocumentation)) // openAPI V3
+  else app.use(`/${urlBase}/apiDocumentation`, swaggerUi.serve, swaggerUi.setup(openApiSpec))
 }
-  
+
 app.use(
   cors({
     origin: true, // Reflect origin (more permissive for dev)
