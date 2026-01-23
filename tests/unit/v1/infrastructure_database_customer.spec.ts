@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import * as connectionFile from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import * as customerModule from '../../../src/v1/infrastructure/persistence/database/customer/index.js'
-import logger from '../../../src/v1/helpers/logger/index.js'
+import { logger } from '../../../src/v1/helpers/logger/index.js'
 import { Readable } from 'node:stream'
 import { ReadStream } from 'node:fs'
 import { DataSource } from 'typeorm'
@@ -12,7 +12,7 @@ vi.mock('../../../src/v1/infrastructure/persistence/database/db_connection/conne
 }))
 
 vi.mock('../../../src/v1/helpers/logger/index.js', () => ({
-  default: {
+  logger: {
     error: vi.fn()
   }
 }))

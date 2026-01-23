@@ -1,4 +1,4 @@
-import logger from '../../../src/v1/helpers/logger'
+import { logger } from '../../../src/v1/helpers/logger'
 
 type outputType = {
   totalRequests: number

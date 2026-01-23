@@ -8,7 +8,7 @@ vi.mock('../../../src/v1/infrastructure/persistence/database/db_connection/conne
 }))
 
 vi.mock('../../../src/v1/helpers/logger/index.js', () => ({
-  default: {
+  logger: {
     warn: vi.fn(),
     error: vi.fn(),
     info: vi.fn()
@@ -17,7 +17,7 @@ vi.mock('../../../src/v1/helpers/logger/index.js', () => ({
 
 import * as modConnector from '../../../src/v1/infrastructure/persistence/database/db_connection/connector.js'
 import { connectionDB } from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
-import logger from '../../../src/v1/helpers/logger/index.js'
+import { logger } from '../../../src/v1/helpers/logger/index.js'
 
 describe('Unit tests - infrastructure:database:db_connection', () => {
   const originalEnv = { ...process.env } as const

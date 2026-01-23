@@ -10,7 +10,7 @@ import openApiSpec from './v1/helpers/apiDocumentation/v3/index.js'
 import compression from 'compression'
 import helmet from 'helmet'
 import cors from 'cors'
-import logger from './v1/helpers/logger/index.js'
+import { logger } from './v1/helpers/logger/index.js'
 
 import rateLimit from 'express-rate-limit'
 
@@ -24,13 +24,13 @@ app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
-        defaultSrc: ['\'self\''],
-        scriptSrc: ['\'self\'', '\'unsafe-inline\'', '\'unsafe-eval\''], // Needed for Swagger UI
-        styleSrc: ['\'self\'', '\'unsafe-inline\''],
-        imgSrc: ['\'self\'', 'data:', 'validator.swagger.io'],
-        connectSrc: ['\'self\''],
-        baseUri: ['\'self\''],
-        formAction: ['\'self\'']
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Needed for Swagger UI
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'validator.swagger.io'],
+        connectSrc: ["'self'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"]
       }
     },
     crossOriginEmbedderPolicy: false,
@@ -62,12 +62,17 @@ app.use(
     credentials: true
   })
 )
+
 app.use(express.json())
 
 // Redirect absolute root to API Documentation
-app.get('/', (_: Request, res: Response) => {
-  return res.redirect(`/${urlBase}/apiDocumentation`)
-})
+app
+  .get('/', (_: Request, res: Response) => {
+    return res.redirect(`/${urlBase}/apiDocumentation`)
+  })
+  .get(`/${urlBase}/`, (_: Request, res: Response) => {
+    return res.redirect(`/${urlBase}/apiDocumentation`)
+  })
 
 app.get(`/${urlBase}/health`, (_: Request, res: Response) => {
   return res.status(200).json({ message: 'OK' })
@@ -76,11 +81,6 @@ app.get(`/${urlBase}/health`, (_: Request, res: Response) => {
 if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'load') {
   app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 })) // 100 req/15min
 }
-
-// Redirect root URL to /api/apiDocumentation
-app.get(`/${urlBase}/`, (_: Request, res: Response) => {
-  return res.status(302).redirect(`/${urlBase}/apiDocumentation`)
-})
 
 app.use(`/${urlBase}/auth`, authRoute)
 app.use(`/${urlBase}/user`, userRoute)
@@ -119,7 +119,7 @@ const handleError = (err: Error, _: Request, res: Response, _next: NextFunction)
     errorResponse.error = err.message // Include more details in development
   }
 
-  res.status(statusCode).json(errorResponse)
+  return res.status(statusCode).json(errorResponse)
 }
 
 // Not found handler

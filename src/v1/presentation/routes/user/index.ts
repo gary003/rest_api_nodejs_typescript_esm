@@ -8,7 +8,7 @@ import { isValidUserId } from '../../middlewares/user/isValidUserId.js'
 import { isAuthorized } from '../../middlewares/auth/isAuthorized.js'
 import { isAdmin } from '../../middlewares/auth/isAdmin.js'
 import { deleteUserById, getAllUsers, getAllUsersStream, getUserWalletInfo, saveNewUser, transferMoney } from '../../../services/user/index.js'
-import logger from '../../../helpers/logger/index.js'
+import { logger } from '../../../helpers/logger/index.js'
 
 const userRouter = Router()
 

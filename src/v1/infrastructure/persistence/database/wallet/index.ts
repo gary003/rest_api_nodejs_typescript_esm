@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { QueryRunner } from 'typeorm'
 import { Customer } from '../customer/entity.js'
 import { moneyTypes, moneyTypesO2 } from '../../../../domain/index.js'
-import logger from '../../../../helpers/logger/index.js'
+import { logger } from '../../../../helpers/logger/index.js'
 
 export const getWalletByIdDB = async (walletId: string): Promise<walletDBDTO> => {
   const connection = await getConnection()

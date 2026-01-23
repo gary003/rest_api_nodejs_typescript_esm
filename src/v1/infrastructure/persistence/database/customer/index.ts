@@ -3,7 +3,7 @@ import { createAndStartTransaction, getConnection } from '../db_connection/conne
 import { Customer } from './entity.js'
 import { createNewWalletDB, deleteWalletByIdDBTransaction } from '../wallet/index.js'
 import { pipeline } from 'stream'
-import logger from '../../../../helpers/logger/index.js'
+import { logger } from '../../../../helpers/logger/index.js'
 import { v4 as uuidv4 } from 'uuid'
 import { customerWalletDBDTO, customerWalletFromTableDB } from './userWalletDB.dto.js'
 import { ReadStream } from 'fs'

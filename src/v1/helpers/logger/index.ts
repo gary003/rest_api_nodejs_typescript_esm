@@ -1,7 +1,7 @@
 import winston, { transports } from 'winston'
 // import { OpenTelemetryTransportV3 } from '@opentelemetry/winston-transport'
 
-const logger = winston.createLogger({
+export const logger = winston.createLogger({
   format: winston.format.combine(
     winston.format.errors({ stack: true }), // Important for error handling
     winston.format.timestamp(),
@@ -40,5 +40,3 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   logger.level = process.env.LOGLEVEL || 'debug'
 }
-
-export default logger

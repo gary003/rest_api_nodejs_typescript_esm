@@ -4,15 +4,15 @@ This project provides a robust REST API for managing users and wallet transactio
 
 ## 1. General Information
 
-- **Base URL**: `/api/v1`
+- **Base URL**: `/api/`
 - **Format**: All requests and responses use `application/json`.
 - **Versioning**: Incremental versioning in the URL path (current: `v1`).
 
 ## 2. Global Endpoints
 
-- **Health Check**: `GET /api/v1/health`
+- **Health Check**: `GET /api/health`
   - Returns the status of the API and its dependencies (DB, Redis).
-- **Documentation**: `GET /api/v1/apiDocumentation`
+- **Documentation**: `GET /api/apiDocumentation`
   - Interactive Swagger UI documentation.
 
 ## 3. Core Resources

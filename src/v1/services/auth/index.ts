@@ -1,5 +1,5 @@
 import redisClient, { connectRedis } from '../../infrastructure/persistence/redis/index.js'
-import logger from '../../helpers/logger/index.js'
+import { logger } from '../../helpers/logger/index.js'
 
 const getRedisKey = (token: string) => `refresh_token:${token}`
 

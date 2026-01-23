@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
-import logger from '../../../helpers/logger/index.js'
+import { logger } from '../../../helpers/logger/index.js'
 // import { loggedUser } from '../../../domain/dto/loggedUser.dto'
 
 export const isAuthorized = (req: Request, res: Response, next: NextFunction) => {

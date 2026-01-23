@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { isValidRefreshToken } from '../../middlewares/auth/isValidRefreshToken.js'
 import { storeRefreshToken, revokeToken } from '../../../services/auth/index.js'
-import logger from '../../../helpers/logger/index.js'
+import { logger } from '../../../helpers/logger/index.js'
 
 const authRouter = Router()
 

@@ -6,7 +6,7 @@ import { moneyTypes, moneyTypesO } from '../../../src/v1/domain/index.js'
 import { addCurrency, deleteUserById, saveNewUser, transferMoney, transferMoneyParamsValidator, transferMoneyWithRetry } from '../../../src/v1/services/user/index.js'
 import { moneyTransferParamsValidatorErrors, transferMoneyErrors, userFunctionsErrors, transferMoneyWithRetryErrors } from '../../../src/v1/services/user/error.dto.js'
 import { transactionQueryRunnerType } from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
-import logger from '../../../src/v1/helpers/logger/index.js'
+import { logger } from '../../../src/v1/helpers/logger/index.js'
 import { userWalletDTO } from '../../../src/v1/services/user/dto.js'
 
 // Mock external dependencies
@@ -475,7 +475,6 @@ describe('Unit tests - services:user', () => {
   // In Vitest/ESM, we can't stub internal calls easily.
   //
   // Workaround: We can mock the dependencies of transferMoney to simulate failure/success.
-
   describe('src > v1 > services > user > index > transferMoneyWithRetry', () => {
     // Since we cannot mock transferMoney directly because it's an internal call,
     // we will mock the dependencies of transferMoney to simulate the scenarios.

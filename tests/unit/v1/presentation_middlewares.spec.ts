@@ -3,12 +3,12 @@ import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
 import { isAdmin } from '../../../src/v1/presentation/middlewares/auth/isAdmin.js'
 import { isAuthorized } from '../../../src/v1/presentation/middlewares/auth/isAuthorized.js'
-import logger from '../../../src/v1/helpers/logger/index.js'
+import { logger } from '../../../src/v1/helpers/logger/index.js'
 import { loggedUser } from '../../../src/v1/domain/dto/loggedUser.dto.js'
 
 // Mock logger
 vi.mock('../../../src/v1/helpers/logger/index.js', () => ({
-  default: {
+  logger: {
     info: vi.fn(),
     error: vi.fn()
   }

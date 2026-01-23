@@ -68,30 +68,6 @@ jobs:
       # Start application for DAST
       - name: Start application
         run: npm run start --wait && echo "Application started successfully" || exit 1
-        env:
-          NODE_ENV: ${{ env.NODE_ENV }}
-          API_VERSION: ${{ env.API_VERSION }}
-          API_SCHEME: ${{ env.API_SCHEME }}
-          API_HOST: ${{ env.API_HOST }}
-          API_PORT: ${{ env.API_PORT }}
-          API_BASEPATH: ${{ env.API_BASEPATH }}
-          LOGLEVEL: ${{ env.LOGLEVEL }}
-          DB_DRIVER: ${{ env.DB_DRIVER }}
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_URI: ${{ env.DB_URI }}
-          DB_PORT: ${{ env.DB_PORT }}
-          DB_USERNAME: ${{ env.DB_USERNAME }}
-          DB_PASSWORD: ${{ env.DB_PASSWORD }}
-          DB_DATABASE_NAME: ${{ env.DB_DATABASE_NAME }}
-          DB_ROOT_PASSWORD: ${{ env.DB_ROOT_PASSWORD }}
-          JWT_SECRET_KEY: ${{ env.JWT_SECRET_KEY }}
-          JWT_REFRESH_SECRET_KEY: ${{ env.JWT_REFRESH_SECRET_KEY }}
-          REDIS_URL: ${{ env.REDIS_URL }}
-          CRYPTO_SECRET_KEY: ${{ env.CRYPTO_SECRET_KEY }}
-          # OTEL_TRACE_EXPORTER_ENDPOINT: ${{ env.OTEL_TRACE_EXPORTER_ENDPOINT }}
-          # OTEL_METRIC_EXPORTER_ENDPOINT: ${{ env.OTEL_METRIC_EXPORTER_ENDPOINT }}
-          # GF_AUTH_ANONYMOUS_ENABLED: ${{ env.GF_AUTH_ANONYMOUS_ENABLED }}
-          # GF_AUTH_ANONYMOUS_ORG_ROLE: ${{ env.GF_AUTH_ANONYMOUS_ORG_ROLE }}
 
       # Dynamic Analysis - OWASP ZAP
       - name: OWASP ZAP Baseline Scan
@@ -196,21 +172,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Create .env file
-        run: |
-          echo "DB_DRIVER=mysql" >> .env
-          echo "DB_HOST=localhost" >> .env
-          echo "DB_PORT=3306" >> .env
-          echo "DB_USERNAME=root" >> .env
-          echo "DB_PASSWORD=testpassword" >> .env
-          echo "DB_DATABASE_NAME=testdb" >> .env
-          echo "DB_URI=mysql://root:testpassword@localhost:3306/testdb" >> .env
-          echo "API_PORT=8080" >> .env
-          echo "LOGLEVEL=debug" >> .env
-          echo "NODE_ENV=test" >> .env
-          echo "SWAGGER_HOST=localhost:8080" >> .env
-          echo "SWAGGER_BASE_PATH=/api" >> .env
 
       - name: Run all tests
         run: npm run test:ci

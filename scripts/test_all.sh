@@ -6,6 +6,7 @@ npm run lint
 
 # Clean previous builds and coverage
 npm run clean
+npm run build:app
 rm -rf coverage/tmp
 mkdir -p coverage/tmp
 

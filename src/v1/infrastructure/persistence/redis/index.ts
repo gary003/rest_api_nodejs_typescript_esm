@@ -1,5 +1,5 @@
 import { createClient } from 'redis'
-import logger from '../../../helpers/logger/index.js'
+import { logger } from '../../../helpers/logger/index.js'
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
 

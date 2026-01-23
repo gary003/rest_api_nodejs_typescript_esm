@@ -1,5 +1,5 @@
 import { DataSourceOptions, DataSource } from 'typeorm'
-import logger from '../../../../helpers/logger/index.js'
+import { logger } from '../../../../helpers/logger/index.js'
 import { v4 as uuidv4 } from 'uuid'
 import { Customer } from '../customer/entity.js'
 import { Wallet } from '../wallet/entity.js'

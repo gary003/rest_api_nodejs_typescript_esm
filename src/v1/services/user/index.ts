@@ -16,7 +16,7 @@ import { transferMoneyErrors, userFunctionsErrors, moneyTransferParamsValidatorE
 import { updateWalletByWalletIdDB, updateWalletByWalletIdTransaction } from '../../infrastructure/persistence/database/wallet/index.js'
 import { moneyTypes, moneyTypesO } from '../../domain/index.js'
 import { errorType } from '../../domain/error.js'
-import logger from '../../helpers/logger/index.js'
+import { logger } from '../../helpers/logger/index.js'
 
 /**
  * Retrieves all users along with their wallet information.

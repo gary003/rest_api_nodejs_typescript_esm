@@ -2,7 +2,8 @@ import { tryToConnectDB } from '../../db_connection/connector.js'
 import { Customer } from '../../customer/entity.js'
 import { Wallet } from '../../wallet/entity.js'
 import path from 'path'
-import logger from '../../../../../helpers/logger/index.js'
+import { logger } from '../../../../../helpers/logger/index.js'
+import { DataSource } from 'typeorm'
 
 // Mock environment variables
 process.env.DB_DRIVER = 'sqlite'
@@ -36,8 +37,9 @@ const seed = async () => {
   logger.info('Starting seed process...')
   logger.info('DB Path:', process.env.DB_DATABASE_NAME)
 
+  let connection: DataSource | null = null
   try {
-    const connection = await tryToConnectDB()
+    connection = await tryToConnectDB()
     logger.info('Connected to DB.')
 
     logger.info('Synchronizing schema (dropping existing tables)...')
@@ -67,10 +69,10 @@ const seed = async () => {
     }
     logger.info(`Seeded ${wallets.length} wallets.`)
 
-    await connection.destroy()
     logger.info('Seed process completed successfully.')
   } catch (error) {
     logger.error('Seed failed:', error)
+    connection?.destroy()
     process.exit(1)
   }
 }

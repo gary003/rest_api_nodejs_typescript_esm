@@ -1,4 +1,4 @@
-import logger from '../src/v1/helpers/logger'
+import { logger } from '../src/v1/helpers/logger/index.js'
 import { Wait, DockerComposeEnvironment, PullPolicy, StartedDockerComposeEnvironment } from 'testcontainers'
 import fs from 'node:fs'
 import path from 'node:path'

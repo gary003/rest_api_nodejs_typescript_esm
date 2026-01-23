@@ -2,7 +2,7 @@ import 'dotenv/config'
 import sdk from './tracing.js'
 import * as http from 'http'
 import app from '../app.js'
-import logger from '../v1/helpers/logger/index.js'
+import { logger } from '../v1/helpers/logger/index.js'
 import { closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 
 const localIp: string = process.env.API_HOST || 'localhost'

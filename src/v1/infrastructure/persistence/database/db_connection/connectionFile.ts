@@ -1,6 +1,6 @@
 import { QueryRunner, DataSource } from 'typeorm'
 import { tryToConnectDB } from './connector.js'
-import logger from '../../../../helpers/logger/index.js'
+import { logger } from '../../../../helpers/logger/index.js'
 
 import { setTimeout } from 'timers/promises'
 
@@ -50,6 +50,7 @@ export const getConnection = async (): Promise<DataSource> => {
   })
 
   connection = newConnection // Cache the connection
+  logger.info('Database connection established successfully')
   return connection // Return the new connection
 }
 
