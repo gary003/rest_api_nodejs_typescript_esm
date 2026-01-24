@@ -214,15 +214,15 @@ jobs:
           docker run --rm -d -p 8080:8080 --name test-container ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }}
 
           # Wait for container to be ready
-          timeout=30
+          maxCount=30
           counter=0
-          until curl -sf http://localhost:8080/api/health > /dev/null || [ $counter -eq $timeout ]; do
-            echo "Waiting for container... ($counter/$timeout)"
-            sleep 2
-            counter=$((counter + 2))
+          until curl -sf http://localhost:8080/api/health > /dev/null || [ $counter -eq $maxCount ]; do
+            echo "Waiting for container... ($counter/$maxCount)"
+            sleep 5
+            counter=$((counter + 1))
           done
 
-          if [ $counter -eq $timeout ]; then
+          if [ $counter -eq $maxCount ]; then
             echo "Container failed to start"
             docker logs test-container
             docker stop test-container

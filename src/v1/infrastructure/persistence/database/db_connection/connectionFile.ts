@@ -50,7 +50,7 @@ export const getConnection = async (): Promise<DataSource> => {
   })
 
   connection = newConnection // Cache the connection
-  logger.info('Database connection established successfully')
+  logger.info('New database connection established successfully')
   return connection // Return the new connection
 }
 

@@ -3,7 +3,7 @@ import sdk from './tracing.js'
 import * as http from 'http'
 import app from '../app.js'
 import { logger } from '../v1/helpers/logger/index.js'
-import { closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
+import { getConnection, closeConnection } from '../v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 
 const localIp: string = process.env.API_HOST || 'localhost'
 
@@ -41,6 +41,15 @@ try {
 server.on('listening', async () => {
   if (!process.env.production) logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
   if (process.send) process.send('ready')
+
+  // Database Connection Pre-heating
+  try {
+    logger.info('Setting up initial database connection pool')
+    await getConnection()
+    logger.info('Database connection pool established at server startup')
+  } catch (error) {
+    logger.warn(`Lazy loading DB connection pool failed during pre-heating - it will be initialized on first request - error: ${String(error)}`)
+  }
 })
 
 // Setup process handlers
