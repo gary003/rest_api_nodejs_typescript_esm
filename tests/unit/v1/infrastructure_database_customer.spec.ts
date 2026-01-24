@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest'
 import * as connectionFile from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import * as customerModule from '../../../src/v1/infrastructure/persistence/database/customer/index.js'
 import { logger } from '../../../src/v1/helpers/logger/index.js'
-import { Readable } from 'node:stream'
-import { ReadStream } from 'node:fs'
 import { DataSource } from 'typeorm'
 
 // 1. Mock the modules (Hoisted by Vitest)
@@ -110,65 +108,6 @@ describe('Unit tests - infrastructure:database:customer', () => {
         // Verify logger and connection calls
         expect(logger.error).toHaveBeenCalled()
         expect(connectionFile.getConnection).toHaveBeenCalledTimes(1)
-      }
-    })
-  })
-
-  describe('src > v1 > infrastructure > database > customer > index > customerStreamAdaptor', () => {
-    it('should adapt stream data correctly', async () => {
-      const mockChunks = [
-        {
-          customer_customer_id: 'customer1_id',
-          customer_firstname: 'John',
-          customer_lastname: 'Doe',
-          wallet_customer_id: 'customer1_id',
-          wallet_wallet_id: 'wallet1',
-          wallet_hard_currency: 1000,
-          wallet_soft_currency: 500
-        }
-      ]
-
-      const mockStream = Readable.from(mockChunks) as ReadStream
-      const adaptor = customerModule.customerStreamAdaptor(mockStream)
-
-      const results: string[] = []
-      for await (const item of adaptor) {
-        results.push(item)
-      }
-
-      expect(results).toHaveLength(1)
-      expect(results[0]).toBe(
-        JSON.stringify({
-          userId: 'customer1_id',
-          firstname: 'John',
-          lastname: 'Doe',
-          Wallet: {
-            walletId: 'wallet1',
-            hardCurrency: 1000,
-            softCurrency: 500
-          }
-        }) + '\n'
-      )
-    })
-
-    it('should handle stream errors', async () => {
-      const mockStream = new Readable({
-        objectMode: true,
-        read() {
-          this.destroy(new Error('Stream read error'))
-        }
-      })
-
-      try {
-        const adaptor = customerModule.customerStreamAdaptor(mockStream as ReadStream)
-        await adaptor.next()
-        expect.fail('Expected an error to be thrown')
-      } catch (err: unknown) {
-        expect(err).toBeDefined()
-        expect((err as Error).message).toContain('Stream Adaptor error')
-
-        // Verify logger call
-        expect(logger.error).toHaveBeenCalledTimes(1)
       }
     })
   })

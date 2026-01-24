@@ -2,32 +2,17 @@ import { Wallet } from '../wallet/entity.js'
 import { createAndStartTransaction, getConnection } from '../db_connection/connectionFile.js'
 import { Customer } from './entity.js'
 import { createNewWalletDB, deleteWalletByIdDBTransaction } from '../wallet/index.js'
-import { pipeline } from 'stream'
 import { logger } from '../../../../helpers/logger/index.js'
 import { v4 as uuidv4 } from 'uuid'
-import { customerWalletDBDTO, customerWalletFromTableDB } from './userWalletDB.dto.js'
-import { ReadStream } from 'fs'
+import { customerWalletFromTableDB } from './customerWalletDB.dto.js'
 
-export const getAllCustomersDBAdapter = (customerDB: customerWalletFromTableDB): customerWalletDBDTO => {
-  return {
-    userId: customerDB.customer_id,
-    firstname: customerDB.firstname,
-    lastname: customerDB.lastname,
-    Wallet: {
-      walletId: customerDB.Wallet.wallet_id,
-      hardCurrency: customerDB.Wallet.hard_currency,
-      softCurrency: customerDB.Wallet.soft_currency
-    }
-  }
-}
-
-// Get all customerss with their wallets from the database
-export const getAllCustomersDB = async (): Promise<customerWalletDBDTO[]> => {
+// Get all customers with their wallets from the database
+export const getAllCustomersDB = async (): Promise<customerWalletFromTableDB[]> => {
   const connection = await getConnection() // Get DB connection
-  const UserRepository = connection.getRepository(Customer) // Get Cusdtomer repository
+  const CustomerRepository = connection.getRepository(Customer) // Get Customer repository
 
   // Query to fetch all customers with their wallets
-  const result = await UserRepository.createQueryBuilder('customer')
+  const result = await CustomerRepository.createQueryBuilder('customer')
     .innerJoinAndMapOne('customer.Wallet', Wallet, 'wallet', 'wallet.customer_id = customer.customer_id')
     .getMany()
     .catch((err) => err)
@@ -41,48 +26,23 @@ export const getAllCustomersDB = async (): Promise<customerWalletDBDTO[]> => {
 
   // Create result customers with wallets
   const customersResults = result.map((chunk: customerWalletFromTableDB) => {
-    return getAllCustomersDBAdapter(chunk)
+    return chunk
   })
 
   return customersResults
 }
 
-// Adapts a database stream into a generator yielding JSON strings of customer data
-export const customerStreamAdaptor = async function* (source: ReadStream): AsyncGenerator<string> {
-  try {
-    // Process each chunk in the stream
-    for await (const chunk of source) {
-      // Map chunk to userWalletDBDTO format
-      const adaptedData = {
-        userId: chunk.customer_customer_id,
-        firstname: chunk.customer_firstname,
-        lastname: chunk.customer_lastname,
-        Wallet: {
-          walletId: chunk.wallet_wallet_id,
-          hardCurrency: chunk.wallet_hard_currency,
-          softCurrency: chunk.wallet_soft_currency
-        }
-      }
-
-      yield `${JSON.stringify(adaptedData)}\n`
-    }
-  } catch (err) {
-    logger.error(err) // Log stream processing errors
-    throw new Error(`Stream Adaptor error - ${String(err)}`)
-  }
-}
-
 // Get all customers as a stream for efficient handling of large datasets
-export const getAllUsersStreamDB = async () => {
+export const getAllCustomersStreamDB = async () => {
   const connection = await getConnection() // Get DB connection
-  const CustomerRepository = connection.getRepository(Customer) // Get User repository
+  const CustomerRepository = connection.getRepository(Customer) // Get Customer repository
 
   // Query to stream customers with their wallets
   const customerStream = await CustomerRepository.createQueryBuilder('customer')
     .innerJoinAndMapOne('customer.Wallet', Wallet, 'wallet', 'wallet.customer_id = customer.customer_id')
     .stream()
 
-  return pipeline(customerStream, customerStreamAdaptor, (err) => err)
+  return customerStream
 }
 
 // Save a new customer to the database and create a wallet for them
@@ -121,7 +81,7 @@ export const deleteCustomerByIdDB = async (customerId: string): Promise<boolean>
   try {
     // Step 2: Delete the wallet if it exists
     if (customerToDeleteInfo.Wallet) {
-      const walletDeletion = await deleteWalletByIdDBTransaction(queryRunner, String(customerToDeleteInfo.Wallet.walletId)).catch((err) => err)
+      const walletDeletion = await deleteWalletByIdDBTransaction(queryRunner, String(customerToDeleteInfo.Wallet.wallet_id)).catch((err) => err)
 
       // Handle wallet deletion errors
       if (walletDeletion instanceof Error) {
@@ -131,17 +91,17 @@ export const deleteCustomerByIdDB = async (customerId: string): Promise<boolean>
     }
 
     // Step 3: Delete the customer
-    const UserRepository = queryRunner.manager.getRepository(Customer)
-    const deletedUser = await UserRepository.delete(customerId).catch((err) => err)
+    const CustomerRepository = queryRunner.manager.getRepository(Customer)
+    const deletedCustomer = await CustomerRepository.delete(customerId).catch((err) => err)
 
     // Handle customer deletion errors
-    if (deletedUser instanceof Error) {
-      logger.error(deletedUser)
-      throw new Error(`Impossible to delete the customer in DB (step 3) - ${deletedUser.message}`)
+    if (deletedCustomer instanceof Error) {
+      logger.error(deletedCustomer)
+      throw new Error(`Impossible to delete the customer in DB (step 3) - ${deletedCustomer.message}`)
     }
 
-    if (deletedUser.affected === 0) {
-      logger.error(deletedUser)
+    if (deletedCustomer.affected === 0) {
+      logger.error(deletedCustomer)
       throw new Error('Impossible to delete the customer in DB (step 3) - no row affected')
     }
 
@@ -161,7 +121,7 @@ export const deleteCustomerByIdDB = async (customerId: string): Promise<boolean>
 // Get a customer's wallet info by their ID
 export const getCustomerWalletInfoDB = async (customerId: string) => {
   const connection = await getConnection() // Get DB connection
-  const CustomerRepository = connection.getRepository(Customer) // Get User repository
+  const CustomerRepository = connection.getRepository(Customer) // Get Customer repository
 
   // Query to fetch customer's wallet info
   const customerWalletInfo = await CustomerRepository.createQueryBuilder('customer')
@@ -181,5 +141,5 @@ export const getCustomerWalletInfoDB = async (customerId: string) => {
     throw new Error('Impossible to get any customer with that ID (response is null - customer doesnt exist)')
   }
 
-  return getAllCustomersDBAdapter(customerWalletInfo) // Return customer's wallet info
+  return customerWalletInfo // Return customer's wallet info
 }

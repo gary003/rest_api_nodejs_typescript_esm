@@ -1,6 +1,7 @@
 import '../../../../bin/tracing.js'
 import { trace, Span, Tracer, SpanOptions } from '@opentelemetry/api'
 import { Router, Request, Response } from 'express'
+import { Readable } from 'stream'
 import { errorAPIUSER } from './error.dto.js'
 import { userWalletDTO } from '../../../services/user/dto.js'
 import { apiResponseGetAllUserType, apiResponseGetUserType, apiResponseCreateUserType, apiResponseDeleteUserType } from './apiResponse.dto.js'
@@ -101,7 +102,7 @@ userRouter.route('/transfer').post(async (req: Request, res: Response) => {
 })
 
 userRouter.route('/stream').get(async (_: Request, res: Response) => {
-  const usersStream = await getAllUsersStream().catch((err) => err)
+  const usersStream = await getAllUsersStream().catch((err: unknown) => err)
 
   if (usersStream instanceof Error) {
     const errInfo = `presentationError: ${errorAPIUSER.errorAPIGetAllUsers?.message} \n ${usersStream.message}`
@@ -109,7 +110,7 @@ userRouter.route('/stream').get(async (_: Request, res: Response) => {
   }
 
   // usersStream.on('data', (d: any) => logger.debug(d))
-  return usersStream.pipe(res)
+  return (usersStream as Readable).pipe(res)
 })
 
 userRouter

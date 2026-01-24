@@ -9,7 +9,7 @@ import {
   getCustomerWalletInfoDB,
   saveNewCustomerDB,
   deleteCustomerByIdDB,
-  getAllUsersStreamDB
+  getAllCustomersStreamDB
 } from '../../infrastructure/persistence/database/customer/index.js'
 import { userWalletDTO } from './dto.js'
 import { transferMoneyErrors, userFunctionsErrors, moneyTransferParamsValidatorErrors, transferMoneyWithRetryErrors } from './error.dto.js'
@@ -17,6 +17,26 @@ import { updateWalletByWalletIdDB, updateWalletByWalletIdTransaction } from '../
 import { moneyTypes, moneyTypesO } from '../../domain/index.js'
 import { errorType } from '../../domain/error.js'
 import { logger } from '../../helpers/logger/index.js'
+import { customerWalletFromTableDB } from '../../infrastructure/persistence/database/customer/customerWalletDB.dto.js'
+import { Readable, pipeline } from 'stream'
+
+/**
+ * Maps a database customer object to a userWalletDTO.
+ * @param {customerWalletFromTableDB} customerDB - The raw database customer object.
+ * @returns {userWalletDTO} - The mapped userWalletDTO.
+ */
+export const mapCustomerToUserDTO = (customerDB: customerWalletFromTableDB): userWalletDTO => {
+  return {
+    userId: customerDB.customer_id,
+    firstname: customerDB.firstname,
+    lastname: customerDB.lastname,
+    Wallet: {
+      walletId: customerDB.Wallet.wallet_id,
+      hardCurrency: customerDB.Wallet.hard_currency,
+      softCurrency: customerDB.Wallet.soft_currency
+    }
+  }
+}
 
 /**
  * Retrieves all users along with their wallet information.
@@ -33,7 +53,12 @@ export const getAllUsers = async (): Promise<userWalletDTO[]> => {
     throw new Error(allUsersError)
   }
 
-  return allUsers as unknown as userWalletDTO[]
+  // Create result users with wallets
+  const usersResults = (allUsers as customerWalletFromTableDB[]).map((chunk: customerWalletFromTableDB) => {
+    return mapCustomerToUserDTO(chunk)
+  })
+
+  return usersResults
 }
 
 /**
@@ -41,8 +66,8 @@ export const getAllUsers = async (): Promise<userWalletDTO[]> => {
  * @returns {Promise<ReadableStream>} - A stream of users with their wallets.
  * @throws {Error} - If the database query fails.
  */
-export const getAllUsersStream = async () => {
-  const streamUsers = await getAllUsersStreamDB().catch((err) => err)
+export const getAllUsersStream = async (): Promise<ReadableStream> => {
+  const streamUsers = (await getAllCustomersStreamDB().catch((err) => err)) as Readable | Error
 
   if (streamUsers instanceof Error) {
     // Log and throw an error if the stream query fails
@@ -51,7 +76,30 @@ export const getAllUsersStream = async () => {
     throw new Error(errorStream)
   }
 
-  return streamUsers
+  // Transfrom raw DB stream to DTO stream
+  const streamUsersAdapted = pipeline(
+    streamUsers,
+    async function* (source) {
+      for await (const user of source) {
+        const adaptedData = {
+          userId: user.customer_customer_id,
+          firstname: user.customer_firstname,
+          lastname: user.customer_lastname,
+          Wallet: {
+            walletId: user.wallet_wallet_id,
+            hardCurrency: user.wallet_hard_currency,
+            softCurrency: user.wallet_soft_currency
+          }
+        }
+        yield `${JSON.stringify(adaptedData)}\n`
+      }
+    },
+    (err) => {
+      if (err) logger.error(`Pipeline error in getAllUsersStream - ${String(err)}`)
+    }
+  )
+
+  return streamUsersAdapted as unknown as ReadableStream
 }
 
 /**
@@ -168,7 +216,7 @@ export const getUserWalletInfo = async (userId: string): Promise<userWalletDTO> 
     throw new Error(fetchError)
   }
 
-  return userWalletI
+  return mapCustomerToUserDTO(userWalletI)
 }
 
 /**
@@ -185,14 +233,16 @@ export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId
   if (!Object.values(moneyTypesO).includes(currency)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
 
   // Retrieve the giver's wallet information
-  const giverUserInfo = await getCustomerWalletInfoDB(giverId).catch((error) => error)
+  const giverUserInfoRaw = await getCustomerWalletInfoDB(giverId).catch((error) => error)
 
-  if (giverUserInfo instanceof Error) {
+  if (giverUserInfoRaw instanceof Error) {
     // Log and throw an error if the giver's wallet info retrieval fails
-    const giverUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(giverUserInfo)}`
+    const giverUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(giverUserInfoRaw)}`
     logger.error(giverUserInfoError)
     throw new Error(giverUserInfoError)
   }
+
+  const giverUserInfo = mapCustomerToUserDTO(giverUserInfoRaw)
 
   // Ensure the giver has a wallet
   if (!giverUserInfo.Wallet) {
@@ -210,14 +260,16 @@ export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId
   }
 
   // Retrieve the recipient's wallet information
-  const recipientUserInfo = await getCustomerWalletInfoDB(recipientId).catch((error: Error) => error)
+  const recipientUserInfoRaw = await getCustomerWalletInfoDB(recipientId).catch((error: Error) => error)
 
-  if (recipientUserInfo instanceof Error) {
+  if (recipientUserInfoRaw instanceof Error) {
     // Log and throw an error if the recipient's wallet info retrieval fails
-    const recipientUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(recipientUserInfo)}`
-    logger.error(recipientUserInfo)
+    const recipientUserInfoError = `serviceError: ${moneyTransferParamsValidatorErrors.ErrorUserInfo?.message} \n databaseError: ${String(recipientUserInfoRaw)}`
+    logger.error(recipientUserInfoRaw)
     throw new Error(recipientUserInfoError)
   }
+
+  const recipientUserInfo = mapCustomerToUserDTO(recipientUserInfoRaw)
 
   // Ensure the recipient has a wallet
   if (!recipientUserInfo.Wallet) {

@@ -7,7 +7,6 @@ import { addCurrency, deleteUserById, saveNewUser, transferMoney, transferMoneyP
 import { moneyTransferParamsValidatorErrors, transferMoneyErrors, userFunctionsErrors, transferMoneyWithRetryErrors } from '../../../src/v1/services/user/error.dto.js'
 import { transactionQueryRunnerType } from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
 import { logger } from '../../../src/v1/helpers/logger/index.js'
-import { userWalletDTO } from '../../../src/v1/services/user/dto.js'
 
 // Mock external dependencies
 vi.mock('../../../src/v1/infrastructure/persistence/database/customer/index.js')
@@ -97,13 +96,13 @@ describe('Unit tests - services:user', () => {
   describe('src > v1 > services > user > index > addCurrency', () => {
     it('should succeed adding currency', async () => {
       const fakeUser = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValue(fakeUser)
@@ -167,24 +166,24 @@ describe('Unit tests - services:user', () => {
     it('Should return the 2 users info objects correctly', async () => {
       const validCurrency = moneyTypesO.soft_currency
       const fakeUserGiver = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000 // Sufficient funds
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000 // Sufficient funds
         }
       }
 
       const fakeUserRecipient = {
-        userId: 'fake_09lo1234-0234-45rt-n632-0242ac129997',
+        customer_id: 'fake_09lo1234-0234-45rt-n632-0242ac129997',
         firstname: 'fake_Michael',
         lastname: 'fake_Mercer',
         Wallet: {
-          walletId: 'fake_888f73b6-027d-11ed-b939-0242ac120987',
-          hardCurrency: 2400,
-          softCurrency: 6700
+          wallet_id: 'fake_888f73b6-027d-11ed-b939-0242ac120987',
+          hard_currency: 2400,
+          soft_currency: 6700
         }
       }
 
@@ -192,31 +191,31 @@ describe('Unit tests - services:user', () => {
 
       const amount = 100
 
-      const [giverUserInfo, recipientUserInfo] = await transferMoneyParamsValidator(validCurrency, fakeUserGiver.userId, fakeUserRecipient.userId, amount)
+      const [giverUserInfo, recipientUserInfo] = await transferMoneyParamsValidator(validCurrency, fakeUserGiver.customer_id, fakeUserRecipient.customer_id, amount)
 
       expect(giverUserInfo).toBeTypeOf('object')
       expect(recipientUserInfo).toBeTypeOf('object')
     })
     it('Should throw an error for invalid currency type', async () => {
       const fakeUserGiver = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
       const fakeUserRecipient = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
@@ -226,7 +225,7 @@ describe('Unit tests - services:user', () => {
       const amount = 100
 
       try {
-        await transferMoneyParamsValidator(invalidCurrency as moneyTypes, fakeUserGiver.userId, fakeUserRecipient.userId, amount)
+        await transferMoneyParamsValidator(invalidCurrency as moneyTypes, fakeUserGiver.customer_id, fakeUserRecipient.customer_id, amount)
         expect.fail('Expected error for invalid currency')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -239,24 +238,24 @@ describe('Unit tests - services:user', () => {
     it('Should throw an error for insufficient funds', async () => {
       const validCurrency = moneyTypesO.soft_currency
       const fakeUserGiver = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 100 // Insufficient funds
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 100 // Insufficient funds
         }
       }
 
       const fakeUserRecipient = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
@@ -265,7 +264,7 @@ describe('Unit tests - services:user', () => {
       const amount = 200 // Attempt to transfer more than available
 
       try {
-        await transferMoneyParamsValidator(validCurrency, fakeUserGiver.userId, fakeUserRecipient.userId, amount)
+        await transferMoneyParamsValidator(validCurrency, fakeUserGiver.customer_id, fakeUserRecipient.customer_id, amount)
         expect.fail('Expected error for insufficient funds')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -278,13 +277,13 @@ describe('Unit tests - services:user', () => {
     it('Should throw an error if retrieving giver user info fails', async () => {
       const validCurrency = moneyTypesO.soft_currency
       const fakeUserRecipient = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
@@ -293,7 +292,7 @@ describe('Unit tests - services:user', () => {
       const amount = 100
 
       try {
-        await transferMoneyParamsValidator(validCurrency, 'fake_giver_id', fakeUserRecipient.userId, amount) // Use a fake giver ID
+        await transferMoneyParamsValidator(validCurrency, 'fake_giver_id', fakeUserRecipient.customer_id, amount) // Use a fake giver ID
         expect.fail('Expected error retrieving giver user info')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -307,25 +306,25 @@ describe('Unit tests - services:user', () => {
     it('Should throw an error if retrieving receiver user info fails', async () => {
       const validCurrency = moneyTypesO.soft_currency
       const fakeUserRecipient = {
-        userId: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
+        customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
       const fakeUserGiver = {
         // Define fake giver object but don't use it
-        userId: 'fake_giver_id',
+        customer_id: 'fake_giver_id',
         firstname: 'fake_Eugene',
         lastname: 'fake_Porter',
         Wallet: {
-          walletId: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
-          hardCurrency: 2000,
-          softCurrency: 2000
+          wallet_id: 'fake_515f73c2-027d-11ed-b939-0242ac120002',
+          hard_currency: 2000,
+          soft_currency: 2000
         }
       }
 
@@ -334,7 +333,7 @@ describe('Unit tests - services:user', () => {
       const amount = 100
 
       try {
-        await transferMoneyParamsValidator(validCurrency, 'fake_giver_id', fakeUserRecipient.userId, amount) // Use a fake giver ID
+        await transferMoneyParamsValidator(validCurrency, 'fake_giver_id', fakeUserRecipient.customer_id, amount) // Use a fake giver ID
         expect.fail('Expected error retrieving giver user info')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -350,8 +349,8 @@ describe('Unit tests - services:user', () => {
   describe('src > v1 > services > user > index > transferMoney', () => {
     it('Successful transfer', async () => {
       // Setup mocks for successful transfer
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
 
       // Mock getCustomerWalletInfoDB to return giver then recipient
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
@@ -395,8 +394,8 @@ describe('Unit tests - services:user', () => {
 
     it('Transfer failure due to createAndStartTransaction error', async () => {
       // Setup mocks for successful validation
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       // Mock transaction creation failure
@@ -419,8 +418,8 @@ describe('Unit tests - services:user', () => {
 
     it('Transfer failure due to acquireLockOnWallet failure (giver)', async () => {
       // Setup mocks for successful validation and transaction
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
       vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
 
@@ -444,8 +443,8 @@ describe('Unit tests - services:user', () => {
 
     it('Transfer failure due to acquireLockOnWallet failure (recipient)', async () => {
       // Setup mocks for successful validation and transaction
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
       vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
 
@@ -481,8 +480,8 @@ describe('Unit tests - services:user', () => {
 
     it('Successful transfer (no retry)', async () => {
       // Mock dependencies to succeed
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
       vi.mocked(modConnection.createAndStartTransaction).mockResolvedValue({ someTransactionObject: true } as unknown as transactionQueryRunnerType)
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true)
@@ -496,8 +495,8 @@ describe('Unit tests - services:user', () => {
 
     it('Successful transfer (with 1 retry)', async () => {
       // Mock dependencies to fail once with Lock error, then succeed
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
 
       // Attempt 1: Validation succeeds, Transaction succeeds, Lock fails (Error - Lock)
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
@@ -518,8 +517,8 @@ describe('Unit tests - services:user', () => {
 
     it('Failure - Transfer fail (non-retryable error)', async () => {
       // Mock dependencies to fail with non-retryable error (e.g. Insufficient Funds)
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 50 } } as userWalletDTO // Insufficient funds
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 50 } } // Insufficient funds
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
 
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
@@ -533,8 +532,8 @@ describe('Unit tests - services:user', () => {
 
     it('Failure - Transfer fail (Maximum retries exceeded)', async () => {
       // Mock dependencies to always fail with Lock error
-      const fakeUserGiver = { Wallet: { walletId: '1234', softCurrency: 123 } } as userWalletDTO
-      const fakeUserRecipient = { Wallet: { walletId: '4321', softCurrency: 300 } } as userWalletDTO
+      const fakeUserGiver = { Wallet: { wallet_id: '1234', soft_currency: 123 } }
+      const fakeUserRecipient = { Wallet: { wallet_id: '4321', soft_currency: 300 } }
 
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValue(fakeUserGiver) // Always return valid user
       // But we need to make sure we return different users for giver/recipient if needed, but here we can just reuse
