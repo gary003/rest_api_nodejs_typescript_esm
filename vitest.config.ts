@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    globalSetup: ['./tests/vitest.setup.ts'],
+    globalSetup: [process.env.UNIT_TEST === 'true' ? './tests/vitest.setup.unit.ts' : './tests/vitest.setup.ts'],
     // This ensures Vitest looks for the right files regardless of ext
     include: ['./tests/**/*.spec.ts', './tests/**/*.test.ts'],
     coverage: {
