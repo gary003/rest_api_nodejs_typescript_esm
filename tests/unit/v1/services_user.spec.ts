@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from 'vites
 import * as modUserDB from '../../../src/v1/infrastructure/persistence/database/customer/index.js'
 import * as modWalletDB from '../../../src/v1/infrastructure/persistence/database/wallet/index.js'
 import * as modConnection from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
-import { moneyTypes, moneyTypesO } from '../../../src/v1/domain/index.js'
+import { moneyTypes } from '../../../src/v1/domain/index.js'
 import { addCurrency, deleteUserById, saveNewUser, transferMoney, transferMoneyParamsValidator, transferMoneyWithRetry } from '../../../src/v1/services/user/index.js'
 import { moneyTransferParamsValidatorErrors, transferMoneyErrors, userFunctionsErrors, transferMoneyWithRetryErrors } from '../../../src/v1/services/user/error.dto.js'
 import { transactionQueryRunnerType } from '../../../src/v1/infrastructure/persistence/database/db_connection/connectionFile.js'
@@ -110,7 +110,7 @@ describe('Unit tests - services:user', () => {
 
       const amountToAdd = 150
       try {
-        const res = await addCurrency('22ef5564-0234-11ed-b939-0242ac120002', moneyTypesO.soft_currency, amountToAdd)
+        const res = await addCurrency('22ef5564-0234-11ed-b939-0242ac120002', 'soft_currency', amountToAdd)
         expect(res).toBe(true)
         expect(modUserDB.getCustomerWalletInfoDB).toHaveBeenCalledTimes(1)
         expect(modWalletDB.updateWalletByWalletIdDB).toHaveBeenCalledTimes(1)
@@ -122,7 +122,7 @@ describe('Unit tests - services:user', () => {
       const amountToAdd = -55
 
       try {
-        await addCurrency('22ef5564-0234-11ed-b939-0242ac120002', moneyTypesO.soft_currency, amountToAdd)
+        await addCurrency('22ef5564-0234-11ed-b939-0242ac120002', 'soft_currency', amountToAdd)
         expect.fail('Unexpected success')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -164,7 +164,7 @@ describe('Unit tests - services:user', () => {
 
   describe('src > v1 > services > user > index > transferMoneyParamsValidator', () => {
     it('Should return the 2 users info objects correctly', async () => {
-      const validCurrency = moneyTypesO.soft_currency
+      const validCurrency = 'soft_currency'
       const fakeUserGiver = {
         customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
@@ -236,7 +236,7 @@ describe('Unit tests - services:user', () => {
       }
     })
     it('Should throw an error for insufficient funds', async () => {
-      const validCurrency = moneyTypesO.soft_currency
+      const validCurrency = 'soft_currency'
       const fakeUserGiver = {
         customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
@@ -275,7 +275,7 @@ describe('Unit tests - services:user', () => {
       }
     })
     it('Should throw an error if retrieving giver user info fails', async () => {
-      const validCurrency = moneyTypesO.soft_currency
+      const validCurrency = 'soft_currency'
       const fakeUserRecipient = {
         customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
@@ -304,7 +304,7 @@ describe('Unit tests - services:user', () => {
       }
     })
     it('Should throw an error if retrieving receiver user info fails', async () => {
-      const validCurrency = moneyTypesO.soft_currency
+      const validCurrency = 'soft_currency'
       const fakeUserRecipient = {
         customer_id: 'fake_22ef5564-0234-11ed-b939-0242ac120002',
         firstname: 'fake_Eugene',
@@ -361,7 +361,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
       // Call the transferMoney function
-      const result = await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
+      const result = await transferMoney('soft_currency', 'giver123', 'recipient456', 100)
 
       // Verify
       expect(modUserDB.getCustomerWalletInfoDB).toHaveBeenCalledTimes(2)
@@ -378,7 +378,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockRejectedValue(new Error('Validation Error'))
 
       try {
-        await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
+        await transferMoney('soft_currency', 'giver123', 'recipient456', 100)
         expect.fail('Unexpected successful transfer')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -402,7 +402,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modConnection.createAndStartTransaction).mockRejectedValue(new Error('Transaction Error'))
 
       try {
-        await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
+        await transferMoney('soft_currency', 'giver123', 'recipient456', 100)
         expect.fail('Unexpected successful transfer')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -427,7 +427,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modConnection.acquireLockOnWallet).mockRejectedValueOnce(new Error('lock test Error')).mockResolvedValueOnce(true)
 
       try {
-        await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
+        await transferMoney('soft_currency', 'giver123', 'recipient456', 100)
         expect.fail('Unexpected successful transfer')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -452,7 +452,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValueOnce(true).mockRejectedValueOnce(new Error('lock test Error'))
 
       try {
-        await transferMoney(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100)
+        await transferMoney('soft_currency', 'giver123', 'recipient456', 100)
         expect.fail('Unexpected successful transfer')
       } catch (err: unknown) {
         if (!(err instanceof Error) || err?.message === null) {
@@ -487,7 +487,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true)
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
-      const result = await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 300)
+      const result = await transferMoneyWithRetry('soft_currency', 'giver123', 'recipient456', 100, 300)
 
       expect(result).toBe(true)
       expect(modConnection.createAndStartTransaction).toHaveBeenCalledTimes(1)
@@ -509,7 +509,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modConnection.acquireLockOnWallet).mockResolvedValue(true) // Subsequent calls succeed
       vi.mocked(modWalletDB.updateWalletByWalletIdTransaction).mockResolvedValue(true)
 
-      const result = await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 30)
+      const result = await transferMoneyWithRetry('soft_currency', 'giver123', 'recipient456', 100, 30)
 
       expect(result).toBe(true)
       expect(logger.warn).toHaveBeenCalledTimes(1)
@@ -523,7 +523,7 @@ describe('Unit tests - services:user', () => {
       vi.mocked(modUserDB.getCustomerWalletInfoDB).mockResolvedValueOnce(fakeUserGiver).mockResolvedValueOnce(fakeUserRecipient)
 
       try {
-        await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', 100, 300)
+        await transferMoneyWithRetry('soft_currency', 'giver123', 'recipient456', 100, 300)
       } catch (err: unknown) {
         expect((err as Error).message).toContain(moneyTransferParamsValidatorErrors.ErrorInsufficientFunds!.message)
         expect(logger.error).toHaveBeenCalled()
@@ -552,7 +552,7 @@ describe('Unit tests - services:user', () => {
       const amountToTransfer = 100
       const delay = 10
       try {
-        await transferMoneyWithRetry(moneyTypesO.soft_currency, 'giver123', 'recipient456', amountToTransfer, delay, maxAttempt)
+        await transferMoneyWithRetry('soft_currency', 'giver123', 'recipient456', amountToTransfer, delay, maxAttempt)
       } catch (err: unknown) {
         expect((err as Error).message).toContain(transferMoneyWithRetryErrors.ErrorMaxRetry!.message)
         expect(logger.warn).toHaveBeenCalled()

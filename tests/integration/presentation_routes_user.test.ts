@@ -1,6 +1,5 @@
 import { describe, it, afterAll, expect, beforeEach } from 'vitest'
 import { errorAPIUSER } from '../../src/v1/presentation/controllers/user/error.dto.js'
-import { moneyTypesO } from '../../src/v1/domain/index.js'
 import jwt from 'jsonwebtoken'
 import { getDockerTestEnvVariables, getTestUrls } from '../vitest.setup.js'
 
@@ -144,7 +143,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId2,
         receiverId: testUserId1,
         amount: 7,
-        currency: moneyTypesO.hard_currency
+        currency: 'hard_currency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
@@ -188,7 +187,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId2,
         receiverId: testUserId1,
         amount: 101,
-        currency: moneyTypesO.hard_currency
+        currency: 'hard_currency'
       }
 
       const invalidData = {
@@ -216,7 +215,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId1,
         receiverId: testUserId1,
         amount: 10,
-        currency: moneyTypesO.hard_currency
+        currency: 'hard_currency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
@@ -240,7 +239,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: nonExistentSenderId,
         receiverId: testUserId1,
         amount: 10,
-        currency: moneyTypesO.hard_currency
+        currency: 'hard_currency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`

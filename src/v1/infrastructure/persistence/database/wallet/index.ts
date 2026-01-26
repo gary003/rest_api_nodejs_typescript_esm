@@ -4,7 +4,7 @@ import { walletDBDTO } from './walletDB.dto.js'
 import { v4 as uuidv4 } from 'uuid'
 import { QueryRunner } from 'typeorm'
 import { Customer } from '../customer/entity.js'
-import { moneyTypes, moneyTypesO2 } from '../../../../domain/index.js'
+import { moneyTypes } from '../../../../domain/index.js'
 import { logger } from '../../../../helpers/logger/index.js'
 
 export const getWalletByIdDB = async (walletId: string): Promise<walletDBDTO> => {
@@ -27,7 +27,7 @@ export const updateWalletByWalletIdDB = async (walletId: string, currencyType: m
 
   const WalletsRepository = connection.getRepository(Wallet)
 
-  const result = await WalletsRepository.update(walletId, { [moneyTypesO2[currencyType]]: newBalance }).catch((err) => err)
+  const result = await WalletsRepository.update(walletId, { [currencyType]: newBalance }).catch((err) => err)
 
   if (result instanceof Error) {
     logger.error(result)
@@ -42,9 +42,7 @@ export const updateWalletByWalletIdTransaction = async (transactionRunner: Query
 
   const WalletsRepository = transactionRunner.manager.getRepository(Wallet)
 
-  const curr = String(moneyTypesO2[currencyType])
-
-  const result = await WalletsRepository.update(walletId, { [curr]: newBalance }).catch((err) => err)
+  const result = await WalletsRepository.update(walletId, { [currencyType]: newBalance }).catch((err) => err)
 
   if (result instanceof Error) {
     logger.error(result)

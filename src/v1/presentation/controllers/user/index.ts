@@ -5,6 +5,7 @@ import { errorAPIUSER } from './error.dto.js'
 import { userWalletDTO } from '../../../services/user/dto.js'
 import { apiResponseGetAllUserType, apiResponseGetUserType, apiResponseCreateUserType, apiResponseDeleteUserType } from './apiResponse.dto.js'
 import { deleteUserById, getAllUsers, getAllUsersStream, getUserWalletInfo, saveNewUser, transferMoney } from '../../../services/user/index.js'
+import { moneyTypes, DB_TO_DTO_MONEY_MAP } from '../../../domain/index.js'
 import { logger } from '../../../helpers/logger/index.js'
 
 export const getAllUsersController = async (_: Request, res: Response) => {
@@ -77,8 +78,12 @@ export const transferMoneyController = async (req: Request, res: Response) => {
     return res.status(400).json(errorAPIUSER.errorAPIUserTransferSelf)
   }
 
+  if (!(currency in DB_TO_DTO_MONEY_MAP)) {
+    return res.status(400).json(errorAPIUSER.errorAPIUserTransfertWrongParams)
+  }
+
   // Call the transferMoney service
-  const result = await transferMoney(currency, senderId, receiverId, amount).catch((err) => {
+  const result = await transferMoney(currency as moneyTypes, senderId, receiverId, amount).catch((err) => {
     logger.error(err)
     return err
   })
