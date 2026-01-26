@@ -1,5 +1,5 @@
 import { describe, it, afterAll, expect, beforeEach } from 'vitest'
-import { errorAPIUSER } from '../../src/v1/presentation/routes/user/error.dto.js'
+import { errorAPIUSER } from '../../src/v1/presentation/controllers/user/error.dto.js'
 import { moneyTypesO } from '../../src/v1/domain/index.js'
 import jwt from 'jsonwebtoken'
 import { getDockerTestEnvVariables, getTestUrls } from '../vitest.setup.js'

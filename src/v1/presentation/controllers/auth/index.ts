@@ -1,0 +1,61 @@
+import { Request, Response } from 'express'
+import jwt from 'jsonwebtoken'
+import { storeRefreshToken, revokeToken } from '../../../services/auth/index.js'
+import { logger } from '../../../helpers/logger/index.js'
+
+export const getTokenController = async (req: Request, res: Response) => {
+  try {
+    const userInfo = req.body.loggedUser
+
+    if (!userInfo || !userInfo.id) {
+      return res.status(400).send('presentation:routes:auth:getToken -User ID is required')
+    }
+
+    const accessToken = jwt.sign(userInfo, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: '60s' })
+    const refreshToken = jwt.sign(userInfo, process.env.JWT_REFRESH_SECRET_KEY || 'refresh_secret', { expiresIn: '1d' })
+
+    await storeRefreshToken(refreshToken, userInfo.id)
+
+    return res.status(200).json({ accessToken, refreshToken })
+  } catch (err) {
+    const errInfo: string = `presentation:routes:auth:getToken - Internal Server Error - ${err}`
+    logger.error(errInfo)
+    return res.status(500).send(errInfo)
+  }
+}
+
+export const logoutController = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body
+    if (!refreshToken) return res.status(400).send('Refresh token is required')
+    await revokeToken(refreshToken)
+    return res.status(200).send('Logged out successfully')
+  } catch (err) {
+    logger.error(`presentation:routes:auth:logout - ${err}`)
+    return res.status(500).send('Internal Server Error')
+  }
+}
+
+export const refreshTokenController = async (req: Request, res: Response) => {
+  try {
+    const { refreshToken } = req.body
+
+    const response = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET_KEY || 'refresh_secret')
+
+    if (response instanceof Error) return res.status(403).send('Invalid Refresh Token')
+
+    // Remove exp and iat from user object before signing new token
+    const userInfo: Record<string, unknown> = { ...(response as jwt.JwtPayload) }
+    delete userInfo.exp
+    delete userInfo.iat
+
+    //logger.debug('presentation:routes:auth:refreshToken - ' + JSON.stringify(response))
+
+    const accessToken = jwt.sign(userInfo, process.env.JWT_SECRET_KEY || 'secret', { expiresIn: '15m' })
+    return res.status(200).json({ accessToken })
+  } catch (err) {
+    const errInfo: string = `presentation:routes:auth:refreshToken - Internal Server Error - ${err}`
+    logger.error(errInfo)
+    return res.status(500).send(errInfo)
+  }
+}
