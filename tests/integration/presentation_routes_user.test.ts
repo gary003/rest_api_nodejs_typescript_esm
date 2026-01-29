@@ -143,7 +143,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId2,
         receiverId: testUserId1,
         amount: 7,
-        currency: 'hard_currency'
+        currency: 'hardCurrency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
@@ -187,7 +187,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId2,
         receiverId: testUserId1,
         amount: 101,
-        currency: 'hard_currency'
+        currency: 'hardCurrency'
       }
 
       const invalidData = {
@@ -215,7 +215,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: testUserId1,
         receiverId: testUserId1,
         amount: 10,
-        currency: 'hard_currency'
+        currency: 'hardCurrency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`
@@ -239,7 +239,7 @@ describe('Integration tests - presentation:routes:user', () => {
         senderId: nonExistentSenderId,
         receiverId: testUserId1,
         amount: 10,
-        currency: 'hard_currency'
+        currency: 'hardCurrency'
       }
 
       const urlToFetch = `${appUrl}/${urlBase}/user/transfer`

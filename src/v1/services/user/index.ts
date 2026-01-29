@@ -14,7 +14,7 @@ import {
 import { userWalletDTO } from './dto.js'
 import { transferMoneyErrors, userFunctionsErrors, moneyTransferParamsValidatorErrors, transferMoneyWithRetryErrors } from './error.dto.js'
 import { updateWalletByWalletIdDB, updateWalletByWalletIdTransaction } from '../../infrastructure/persistence/database/wallet/index.js'
-import { DB_TO_DTO_MONEY_MAP, moneyTypes } from '../../domain/index.js'
+import { moneyTypes, toDBMoneyType } from '../../domain/index.js'
 import { errorType } from '../../domain/error.js'
 import { logger } from '../../helpers/logger/index.js'
 import { customerWalletFromTableDB } from '../../infrastructure/persistence/database/customer/customerWalletDB.dto.js'
@@ -146,7 +146,7 @@ export const saveNewUser = async (firstname: string, lastname: string): Promise<
 export const addCurrency = async (userId: string, currencyType: moneyTypes, amount: number): Promise<boolean> => {
   // Validate the amount and currency type
   if (amount <= 0) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorInvalidAmount?.message}`)
-  if (!(currencyType in DB_TO_DTO_MONEY_MAP)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
+  if (currencyType !== 'hardCurrency' && currencyType !== 'softCurrency') throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
 
   // Retrieve the user's wallet information
   const currentUserWalletInfo = await getUserWalletInfo(userId).catch((err) => err)
@@ -164,13 +164,11 @@ export const addCurrency = async (userId: string, currencyType: moneyTypes, amou
     throw new Error(`serviceError: ${userFunctionsErrors.ErrorNoWalletUser?.message}`)
   }
 
-  const moneyTypeAdded = DB_TO_DTO_MONEY_MAP[currencyType] as keyof typeof currentUserWalletInfo.Wallet
+  const dbCurrency = toDBMoneyType(currencyType)
   // Update the wallet with the new balance
-  const resultUpdate = await updateWalletByWalletIdDB(
-    String(currentUserWalletInfo.Wallet.walletId),
-    currencyType,
-    Number(currentUserWalletInfo.Wallet[moneyTypeAdded]) + amount
-  ).catch((err) => err)
+  const resultUpdate = await updateWalletByWalletIdDB(String(currentUserWalletInfo.Wallet.walletId), dbCurrency, Number(currentUserWalletInfo.Wallet[currencyType]) + amount).catch(
+    (err) => err
+  )
 
   if (resultUpdate instanceof Error) {
     // Log and throw an error if the wallet update fails
@@ -231,7 +229,7 @@ export const getUserWalletInfo = async (userId: string): Promise<userWalletDTO> 
  */
 export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId: string, recipientId: string, amount: number): Promise<userWalletDTO[]> => {
   // Validate the currency type
-  if (!(currency in DB_TO_DTO_MONEY_MAP)) throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
+  if (currency !== 'hardCurrency' && currency !== 'softCurrency') throw new Error(`serviceError: ${moneyTransferParamsValidatorErrors.ErrorCurrencyType?.message}`)
 
   // Retrieve the giver's wallet information
   const giverUserInfoRaw = await getCustomerWalletInfoDB(giverId).catch((error) => error)
@@ -253,9 +251,8 @@ export const transferMoneyParamsValidator = async (currency: moneyTypes, giverId
   }
 
   //
-  const moneyTypeToTransfer = DB_TO_DTO_MONEY_MAP[currency] as keyof typeof giverUserInfo.Wallet
   // Calculate the giver's new balance after the transfer
-  const giverNewBalance = Number(giverUserInfo.Wallet[moneyTypeToTransfer]) - amount
+  const giverNewBalance = Number(giverUserInfo.Wallet[currency as keyof typeof giverUserInfo.Wallet]) - amount
 
   // Ensure the giver has sufficient funds
   if (giverNewBalance < 0) {
@@ -335,12 +332,11 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
     throw new Error(errorLock)
   }
 
-  // Get the money type to transfer
-  const moneyTypeToTransfer = DB_TO_DTO_MONEY_MAP[currency] as keyof typeof giverUserInfo.Wallet
+  const dbCurrency = toDBMoneyType(currency)
   // Update the giver's wallet with the new balance
-  const giverNewBalance: number = Number(giverUserInfo.Wallet[moneyTypeToTransfer]) - amount
+  const giverNewBalance: number = Number(giverUserInfo.Wallet[currency as keyof typeof giverUserInfo.Wallet]) - amount
 
-  const updateWalletGiverResult = await updateWalletByWalletIdTransaction(transacRunner, String(giverUserInfo.Wallet.walletId), currency, giverNewBalance).catch((err) => err)
+  const updateWalletGiverResult = await updateWalletByWalletIdTransaction(transacRunner, String(giverUserInfo.Wallet.walletId), dbCurrency, giverNewBalance).catch((err) => err)
 
   if (updateWalletGiverResult instanceof Error) {
     // Log and throw an error if the giver's wallet update fails
@@ -351,9 +347,9 @@ export const transferMoney = async (currency: moneyTypes, giverId: string, recip
   }
 
   // Update the recipient's wallet with the new balance
-  const recipientNewBalance: number = Number(recipientUserInfo.Wallet[moneyTypeToTransfer]) + amount
+  const recipientNewBalance: number = Number(recipientUserInfo.Wallet[currency as keyof typeof recipientUserInfo.Wallet]) + amount
 
-  const updateWalletRecipientResult = await updateWalletByWalletIdTransaction(transacRunner, String(recipientUserInfo.Wallet.walletId), currency, recipientNewBalance).catch(
+  const updateWalletRecipientResult = await updateWalletByWalletIdTransaction(transacRunner, String(recipientUserInfo.Wallet.walletId), dbCurrency, recipientNewBalance).catch(
     (err) => err
   )
 

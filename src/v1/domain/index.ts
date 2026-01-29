@@ -1,11 +1,20 @@
-export const DB_TO_DTO_MONEY_MAP = {
-  hard_currency: 'hardCurrency',
-  soft_currency: 'softCurrency'
+export const moneyTypes = {
+  HARD_CURRENCY: 'hardCurrency',
+  SOFT_CURRENCY: 'softCurrency'
 } as const
 
-export const DTO_TO_DB_MONEY_MAP = {
-  hardCurrency: 'hard_currency',
-  softCurrency: 'soft_currency'
+export const moneyTypesDB = {
+  HARD_CURRENCY: 'hard_currency',
+  SOFT_CURRENCY: 'soft_currency'
 } as const
 
-export type moneyTypes = keyof typeof DB_TO_DTO_MONEY_MAP
+export type moneyTypes = (typeof moneyTypes)[keyof typeof moneyTypes]
+export type moneyTypesDB = (typeof moneyTypesDB)[keyof typeof moneyTypesDB]
+
+/**
+ * Helper to convert camelCase domain currency to snake_case database currency.
+ * Avoids the need for a large mapping object while maintaining type safety.
+ */
+export const toDBMoneyType = (type: moneyTypes): moneyTypesDB => {
+  return (type === 'hardCurrency' ? 'hard_currency' : 'soft_currency') as moneyTypesDB
+}

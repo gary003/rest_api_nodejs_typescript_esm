@@ -4,7 +4,7 @@ import { walletDBDTO } from './walletDB.dto.js'
 import { v4 as uuidv4 } from 'uuid'
 import { QueryRunner } from 'typeorm'
 import { Customer } from '../customer/entity.js'
-import { moneyTypes } from '../../../../domain/index.js'
+import { moneyTypesDB } from '../../../../domain/index.js'
 import { logger } from '../../../../helpers/logger/index.js'
 
 export const getWalletByIdDB = async (walletId: string): Promise<walletDBDTO> => {
@@ -22,7 +22,7 @@ export const getWalletByIdDB = async (walletId: string): Promise<walletDBDTO> =>
   return wallet as walletDBDTO
 }
 
-export const updateWalletByWalletIdDB = async (walletId: string, currencyType: moneyTypes, newBalance: number): Promise<boolean> => {
+export const updateWalletByWalletIdDB = async (walletId: string, currencyType: moneyTypesDB, newBalance: number): Promise<boolean> => {
   const connection = await getConnection()
 
   const WalletsRepository = connection.getRepository(Wallet)
@@ -37,7 +37,7 @@ export const updateWalletByWalletIdDB = async (walletId: string, currencyType: m
   return true
 }
 
-export const updateWalletByWalletIdTransaction = async (transactionRunner: QueryRunner, walletId: string, currencyType: moneyTypes, newBalance: number): Promise<boolean> => {
+export const updateWalletByWalletIdTransaction = async (transactionRunner: QueryRunner, walletId: string, currencyType: moneyTypesDB, newBalance: number): Promise<boolean> => {
   // logger.debug(JSON.stringify([walletId, currencyType, newBalance]))
 
   const WalletsRepository = transactionRunner.manager.getRepository(Wallet)

@@ -11,6 +11,9 @@ export default defineConfig({
       provider: 'v8',
       include: ['src/v1/**'],
       exclude: [
+        process.env.UNIT_TEST === 'true' ? 'src/v1/infrastructure' : '',
+        process.env.UNIT_TEST === 'true' ? 'src/v1/domain' : '',
+        process.env.UNIT_TEST === 'true' ? 'src/v1/helpers' : '',
         'src/v1/infrastructure/observability/**',
         'src/v1/infrastructure/persistence/database/db_volume/**',
         'src/v1/infrastructure/persistence/database/db_scripts/**',

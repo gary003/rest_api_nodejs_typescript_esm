@@ -152,7 +152,7 @@ describe('Load tests - presentation:routes:user', () => {
 
         // Use -a 100 to limit total requests and avoid draining the wallet
         // Added -t 20 to increase timeout for slow environments
-        const cmd = `npx autocannon -c 6 -a 100 -t 20 -j -m POST --body '{"senderId": "${user1.userId}", "receiverId": "${user2.userId}", "amount": 1, "currency": "hard_currency"}' -H 'Content-Type: application/json' "${appUrl}/${urlBase}/user/transfer"`
+        const cmd = `npx autocannon -c 6 -a 100 -t 20 -j -m POST --body '{"senderId": "${user1.userId}", "receiverId": "${user2.userId}", "amount": 1, "currency": "hardCurrency"}' -H 'Content-Type: application/json' "${appUrl}/${urlBase}/user/transfer"`
 
         const { stdout, stderr } = await execAsync(cmd, { maxBuffer: 10 * 1024 * 1024 })
         const output = stdout || stderr
