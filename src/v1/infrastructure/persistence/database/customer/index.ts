@@ -1,10 +1,10 @@
+import { Customer } from './entity.js'
 import { Wallet } from '../wallet/entity.js'
 import { createAndStartTransaction, getConnection } from '../db_connection/connectionFile.js'
-import { Customer } from './entity.js'
 import { createNewWalletDB, deleteWalletByIdDBTransaction } from '../wallet/index.js'
-import { logger } from '../../../../helpers/logger/index.js'
-import { v4 as uuidv4 } from 'uuid'
 import { customerWalletFromTableDB } from './customerWalletDB.dto.js'
+import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../../../helpers/logger/index.js'
 
 // Get all customers with their wallets from the database
 export const getAllCustomersDB = async (): Promise<customerWalletFromTableDB[]> => {

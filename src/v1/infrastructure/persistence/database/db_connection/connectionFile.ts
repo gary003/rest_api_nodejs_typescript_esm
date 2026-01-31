@@ -1,8 +1,7 @@
 import { QueryRunner, DataSource } from 'typeorm'
 import { tryToConnectDB } from './connector.js'
+import { setTimeout } from 'node:timers/promises'
 import { logger } from '../../../../helpers/logger/index.js'
-
-import { setTimeout } from 'timers/promises'
 
 export type transactionQueryRunnerType = QueryRunner
 

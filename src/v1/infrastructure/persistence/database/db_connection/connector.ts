@@ -1,8 +1,8 @@
-import { DataSourceOptions, DataSource } from 'typeorm'
-import { logger } from '../../../../helpers/logger/index.js'
-import { v4 as uuidv4 } from 'uuid'
 import { Customer } from '../customer/entity.js'
 import { Wallet } from '../wallet/entity.js'
+import { DataSourceOptions, DataSource } from 'typeorm'
+import { v4 as uuidv4 } from 'uuid'
+import { logger } from '../../../../helpers/logger/index.js'
 
 /**
  * Generates connection options for the database based on environment variables.
