@@ -3,13 +3,19 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY package*.json ./
+# Change ownership of /app to node user
+RUN chown node:node /app
+
+# Switch to non-root user
+USER node
+
+COPY --chown=node:node package*.json ./
 
 RUN npm ci
 
-COPY src ./src
-COPY ecosystem.config.js ./
-COPY tsconfig.json ./
+COPY --chown=node:node src ./src
+COPY --chown=node:node ecosystem.config.js ./
+COPY --chown=node:node tsconfig.json ./
 
 RUN npm run build:app
 

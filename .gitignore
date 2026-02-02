@@ -27,7 +27,7 @@ db_volume
 
 # # sqlite db file
 # *sqlite*
-# sqlite.db
+sqlite.db
 
 # dump project file
 project_dump*

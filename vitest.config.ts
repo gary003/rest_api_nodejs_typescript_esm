@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitest/config'
 
+const globalSetup = process.env.UNIT_TEST == 'true' ? './tests/vitest.setup.unit.ts' : './tests/vitest.setup.ts'
+
 const filesToExclude = [
   'src/v1/infrastructure/observability/**',
   'src/v1/infrastructure/persistence/database/db_volume/**',
@@ -9,8 +11,6 @@ const filesToExclude = [
   '**/db_file_volume/**',
   '**/sqlite/**'
 ]
-
-const globalSetup = process.env.UNIT_TEST == 'true' ? './tests/vitest.setup.unit.ts' : './tests/vitest.setup.ts'
 
 if (process.env.UNIT_TEST === 'true') {
   filesToExclude.push('src/v1/infrastructure', 'src/v1/domain', 'src/v1/helpers')
@@ -26,13 +26,13 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/v1/**'],
-      exclude: filesToExclude
-      // thresholds: {
-      //   branches: 80,
-      //   lines: 80,
-      //   functions: 80,
-      //   statements: 80
-      // }
+      exclude: filesToExclude,
+      thresholds: {
+        branches: 80,
+        lines: 80,
+        functions: 80,
+        statements: 80
+      }
     }
   }
 })
