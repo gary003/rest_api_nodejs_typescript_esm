@@ -1,17 +1,17 @@
 FROM node:24-alpine
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl build-base python3
 
 WORKDIR /app
 
 # Change ownership of /app to node user
-RUN chown node:node /app
+RUN chown -R node:node /app
 
 # Switch to non-root user
 USER node
 
 COPY --chown=node:node package*.json ./
 
-RUN npm ci
+RUN npm install --legacy-peer-deps
 
 COPY --chown=node:node src ./src
 COPY --chown=node:node ecosystem.config.js ./
