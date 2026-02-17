@@ -43,8 +43,6 @@ Explore the detailed project documentation:
 - [**Deployment**](./DEPLOYMENT.md) - Docker Hub, CI/CD, and production operations.
 - [**Codes of Conduct**](./CODE_OF_CONDUCT.md) - Community standards and pledge.
 
----
-
 ## Description
 
 This repository is a backend REST API portfolio that has a few routes (CRUD) aiming to keep at hand backend development techniques and show off development skills.
