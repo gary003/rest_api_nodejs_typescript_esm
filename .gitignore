@@ -24,8 +24,9 @@ grafana_data_volume
 
 # Persistence volumes
 db_volume
+*db_file_volume*
 
-# # sqlite db file
+# sqlite db file
 *sqlite*
 sqlite.db
 

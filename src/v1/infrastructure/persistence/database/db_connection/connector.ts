@@ -23,7 +23,7 @@ const getConnectionOptions = async (): Promise<DataSourceOptions> => {
     return {
       ...baseOptions,
       database: process.env.DB_DATABASE_NAME, // Path to sqlite file
-      flags: 0x00000040 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE (optional, but good for explicit control)
+      flags: 0x00000004 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE
     } as DataSourceOptions
   }
 
