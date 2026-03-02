@@ -15,7 +15,6 @@ const userRouter = Router()
 
 userRouter.route('/').get(getAllUsersController).post(createUserController)
 
-// New route for transferring money
 userRouter.route('/transfer').post(transferMoneyController)
 
 userRouter.route('/stream').get(getUsersStreamController)

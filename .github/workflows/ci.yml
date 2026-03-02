@@ -27,7 +27,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       # Static Analysis - Trivy
       - name: Trivy filesystem scan
@@ -152,7 +152,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Run Lint
         run: npm run lint
@@ -171,7 +171,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Run all tests
         run: npm run test:ci
@@ -201,7 +201,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
