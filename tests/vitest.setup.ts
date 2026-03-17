@@ -9,6 +9,7 @@ import { execSync } from 'node:child_process'
  * @type {string}
  **/
 const composeFilePath: string = '.'
+
 /**
  * @description Name of the docker-compose file
  * @type {string}
