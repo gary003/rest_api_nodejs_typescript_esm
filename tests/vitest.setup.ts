@@ -17,6 +17,12 @@ const composeFilePath: string = '.'
 const composeFile: string = 'docker-compose.yaml'
 
 /**
+ * @description Global variable to store the test environment
+ * @type {StartedDockerComposeEnvironment | null}
+ **/
+let globalDockerTestEnv: StartedDockerComposeEnvironment | null = null
+
+/**
  * @description In a real project, you would use a .env file for environment variables
  * @type {Object}
  **/
@@ -34,40 +40,6 @@ export const getDockerTestEnvVariables = (): Record<string, string> => {
     DB_DATABASE_NAME: 'mydb',
     DB_PORT: '3306',
     LOGLEVEL: 'debug'
-  }
-}
-
-/**
- * @description Global variable to store the test environment
- * @type {StartedDockerComposeEnvironment | null}
- **/
-let globalDockerTestEnv: StartedDockerComposeEnvironment | null = null
-
-/**
- * @description Vitest global setup function (only launches the dockerized test environment once)
- * @returns {Promise<void>}
- **/
-export const setup = async (): Promise<void> => {
-  logger.debug('Starting Vitest Global Setup - Initializing Docker Compose (with testcontainers) ...')
-
-  const testEnvVariables = getDockerTestEnvVariables()
-
-  logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
-  logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
-
-  try {
-    globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
-      .withBuild()
-      .withPullPolicy(PullPolicy.defaultPolicy())
-      .withEnvironment(testEnvVariables)
-      .withWaitStrategy('db', Wait.forHealthCheck())
-      .withWaitStrategy('app', Wait.forHealthCheck())
-      .up(['app', 'db'])
-
-    logger.debug('Docker Compose test environment is ready!')
-  } catch (error) {
-    logger.error(`Failed to start Docker Compose environment: ${error}`)
-    throw new Error(`error during Docker Compose setup: ${error}`)
   }
 }
 
@@ -114,6 +86,34 @@ const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
   const dbKey = Object.keys(containers).find((key: string) => key.includes('db'))
 
   return dbKey ? containers[dbKey] : undefined
+}
+
+/**
+ * @description Vitest global setup function (only launches the dockerized test environment once)
+ * @returns {Promise<void>}
+ **/
+export const setup = async (): Promise<void> => {
+  logger.debug('Starting Vitest Global Setup - Initializing Docker Compose (with testcontainers) ...')
+
+  const testEnvVariables = getDockerTestEnvVariables()
+
+  logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
+  logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
+
+  try {
+    globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
+      .withBuild()
+      .withPullPolicy(PullPolicy.defaultPolicy())
+      .withEnvironment(testEnvVariables)
+      .withWaitStrategy('db', Wait.forHealthCheck())
+      .withWaitStrategy('app', Wait.forHealthCheck())
+      .up(['app', 'db'])
+
+    logger.debug('Docker Compose test environment is ready!')
+  } catch (error) {
+    logger.error(`Failed to start Docker Compose environment: ${error}`)
+    throw new Error(`error during Docker Compose setup: ${error}`)
+  }
 }
 
 /**
