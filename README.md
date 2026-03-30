@@ -41,7 +41,6 @@ Explore the detailed project documentation:
 - [**Security**](./SECURITY.md) - SAST/DAST, encryption, and protection practices.
 - [**API Guide**](./API.md) - Endpoint overview, request/response formats.
 - [**Deployment**](./DEPLOYMENT.md) - Docker Hub, CI/CD, and production operations.
-- [**Codes of Conduct**](./CODE_OF_CONDUCT.md) - Community standards and pledge.
 
 ## Description
 
