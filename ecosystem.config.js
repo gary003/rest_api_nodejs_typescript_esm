@@ -5,6 +5,6 @@ export const apps = [
     exec_mode: 'cluster',
     instances: 4,
     wait_ready: true,
-    listen_timeout: 3000
+    listen_timeout: 30000
   }
 ]

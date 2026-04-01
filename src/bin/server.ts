@@ -38,16 +38,16 @@ server.on('error', (error) => {
   process.exit(1)
 })
 
-try {
-  logger.info('Starting node-sdk tracing ...')
-  sdk.start()
-  logger.info('node-sdk tracing started')
-} catch (error) {
-  logger.error('Error starting node-sdk tracing', String(error))
-}
+// try {
+//   logger.info('Starting node-sdk tracing ...')
+//   sdk.start()
+//   logger.info('node-sdk tracing started')
+// } catch (error) {
+//   logger.error('Error starting node-sdk tracing', String(error))
+// }
 
 server.on('listening', async () => {
-  if (!process.env.production) logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
+  if (process.env.NODE_ENV !== 'production') logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
   if (process.send) process.send('ready')
 
   // Database Connection Pre-heating
