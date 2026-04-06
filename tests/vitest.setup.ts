@@ -93,12 +93,14 @@ const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
  * @returns {Promise<void>}
  **/
 export const setup = async (): Promise<void> => {
-  logger.debug('Starting Vitest Global Setup - Initializing Docker Compose (with testcontainers) ...')
+  logger.debug('Starting Vitest Global Setup')
 
   const testEnvVariables = getDockerTestEnvVariables()
 
   logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
   logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
+
+  logger.debug('Initializing the dockerized test environment (with testcontainers) ...')
 
   try {
     globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
@@ -111,8 +113,8 @@ export const setup = async (): Promise<void> => {
 
     logger.debug('Docker Compose test environment is ready!')
   } catch (error) {
-    logger.error(`Failed to start Docker Compose environment: ${error}`)
-    throw new Error(`error during Docker Compose setup: ${error}`)
+    logger.error(`Failed to start Docker Compose environment: ${String(error)}`)
+    throw new Error(`error during Docker Compose setup: ${String(error)}`)
   }
 }
 
