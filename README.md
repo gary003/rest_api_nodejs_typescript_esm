@@ -123,6 +123,7 @@ Detailed testing guide available in [TESTING.md](./TESTING.md).
   - Mail: <gary.johnson.top@gmail.com>
   - Github: <https://github.com/gary003>
   - LinkedIn: <https://www.linkedin.com/in/gary-johnson-0168b985/>
+  - Malt: <https://www.malt.fr/profile/garyjohnson1>
 
 ## License
 

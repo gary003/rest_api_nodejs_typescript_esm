@@ -1,180 +1,4 @@
 
-------- file: ./TESTING.md -------
-# Testing Strategy & Documentation
-
-Internal documentation for the testing lifecycle and infrastructure of this project.
-
-## 1. Overview
-
-Our testing strategy follows the **Testing Pyramid**, but with a heavy focus on **Isolated Integration Tests** to ensure the "Clean Architecture" layers are correctly wired.
-
-- **Unit Tests**: Domain logic and individual services.
-- **Integration Tests**: End-to-end flow from API route to Database.
-- **Load Tests**: Load testing via `autocannon`.
-
-## 2. Tests Infrastructure (integration & load tests)
-
-### The Switch **from** Supertest to V8-Bind
-
-We moved away from mocking the server with `supertest` in favor of a **Dockerized V8-Bind Coverage** approach.
-
-#### **Why?**
-
-1. **Full-Stack Coverage**: Supertest only covers the application logic. V8-bind records coverage for _everything_ running inside the target Docker container, including infrastructure drivers (MySQL, Redis), middleware, and compiled artifacts.
-2. **Environment Parity**: Tests run against the exact same Docker image that is deployed to production.
-3. **No Mocking**: We test against real databases (containerized), not in-memory mocks.
-
-#### **How it works (The Lifecycle)**
-
-1. **Setup**: `testcontainers` spins up the `app` and `db` services.
-2. **Execution**: Vitest hits the containerized API via `fetch`.
-3. **Collection**: The Node.js process inside the container dumps coverage logic to a mounted volume (`/app/coverage/tmp`).
-4. **Teardown**:
-   - **Permission Fix**: Since Docker runs as root, we use a temporary Alpine container to `chmod` the coverage files so the host user can access them.
-   - **Path Mapping**: We programmatically rewrite paths in the V8 JSON files (e.g., from `/app/dist/` to your local folder) so reporting tools can map coverage back to the original `.ts` source files.
-
-## 3. Running Tests
-
-### Integration Tests
-
-Run tests and generate a unified coverage report:
-
-```bash
-npm run test:integration
-```
-
-### Unit Tests
-
-```bash
-npm run test:unit:v1
-```
-
-### All Tests (CI Pipeline)
-
-```bash
-npm run test
-```
-
-## 4. Technical Details
-
-### Key Files
-
-- `tests/vitest.setup.ts`: Global lifecycle management (Docker Orchestration & Post-processing).
-- `docker-compose.yaml`: Defensive configuration for the test environment.
-- `scripts/test_integration.sh`: Coordination of the V8 coverage pipeline.
-
-### POST-PROCESS: Path Mapping Logic
-
-To ensure coverage tools show the correct lines in your IDE, the setup script performs a search-and-replace on the raw V8 data:
-
-```typescript
-const newContent = content.replaceAll('/app/', process.cwd() + '/')
-```
-
-## 5. Troubleshooting
-
-- **Permission Denied**: If `coverage/tmp` is locked, the Alpine `chmod` fix in `vitest.setup.ts` usually resolves this.
-- **Container Timeout**: Increase the `Wait.forHealthCheck()` timeout in `vitest.setup.ts` if your machine is under heavy load.
-
-------- file: ./ARCHITECTURE.md -------
-# Architecture Overview
-
-This project is a **production‑oriented REST API** built with **Node.js, TypeScript (ESM)** and **TypeORM**, designed around **clear boundaries, testability, and operational realism**.
-
-The architecture intentionally favors **clarity and correctness over premature abstraction**, while remaining scalable.
-
----
-
-## High‑Level Principles
-
-- **Layered architecture** with strict dependency direction
-- **Environment‑driven behavior** (dev / test / prod)
-- **Explicit error handling** and failure modeling
-- **Testability as a first‑class concern**
-- **Operational awareness** (observability, retries, isolation)
-
----
-
-## Clean Architecture Layers
-
-src/v1/
-├─ presentation/ → HTTP layer (Controllers, Routes, DTOs, Middlewares)
-├─ services/ → Pure Business Logic
-├─ domain/ → Entities, Value Objects, Aggregates
-└─ infrastructure/ → External Tools (Database, Redis, Logger, Observability)
-
-1. **Domain**: The core of the application. Contains entities and business rules. No dependencies on frameworks or libraries.
-2. **Application**: Coordinates tasks and delegates work to the domain.
-3. **Presentation**: Handles HTTP requests/responses. Translates API contracts to application calls.
-4. **Infrastructure**: Implementation of interfaces defined by outer layers (e.g., TypeORM repositories, Redis caching).
-
----
-
-## Environment Strategy
-
-The system behaves differently depending on the environment, by design.
-
-| Environment | Database | Driver    | Purpose                                |
-| :---------- | :------- | :-------- | :------------------------------------- |
-| `dev`       | SQLite   | `sqlite3` | Fast local development, zero setup     |
-| `test`      | MySQL    | `mysql2`  | Integration tests in Docker containers |
-| `prod`      | MySQL    | `mysql2`  | Production environment                 |
-
----
-
-## Persistence & Database
-
-- **TypeORM** is used as the ORM layer.
-- **Entities** live in `domain`.
-- **Repositories** and DB wiring live in `infrastructure`.
-
----
-
-## Testing Strategy (The "Senior Pro" Approach)
-
-Testing is a first-class citizen in this architecture.
-
-### 1. Unit Tests
-
-- Focused on `domain` and `application` layers.
-- Fast, zero IO, zero database.
-
-### 2. Integration Tests (Black-Box)
-
-- Runs against a **real containerized MySQL** using `testcontainers`.
-- Uses a **V8-Bind Coverage** strategy:
-  - The app runs in a real Docker container.
-  - Coverage is collected natively by the V8 engine inside the container.
-  - Files are synced back to the host via volumes.
-  - This ensures 100% realistic coverage of the **Infrastructure** layer (drivers, middleware, etc.).
-
-### 3. Load Tests
-
-- Load testing using **Autocannon**.
-- Validates the system under stress (locking, pool limits).
-
----
-
-## Observability & Operations
-
-The architecture is observability‑ready:
-
-- **Structured logging** via Winston.
-- **OpenTelemetry** integration (ready for traces/metrics).
-- **PM2** for process management in production.
-- **Health checks** for container orchestration (Kubernetes/Docker Compose ready).
-
----
-
-## Summary
-
-This architecture is designed to:
-
-- Be easy to reason about.
-- Make failures visible.
-- Support long‑term maintenance.
-- Scale in **complexity before scale in size**.
-
 ------- file: ./package.json -------
 {
   "author": "Gary Johnson",
@@ -260,49 +84,6 @@ This architecture is designed to:
   "license": "MIT"
 }
 
-------- file: ./SECURITY.md -------
-# Security Practices
-
-## Data Protection
-
-- **All inputs sanitized**: Using **Zod** for schema validation and TypeORM for parameterized SQL queries to prevent injection.
-- **Secrets management**:
-  - Never hardcoded - used GitHub Actions secrets for CI/CD.
-  - Environment variables are used for all sensitive configuration (`.env` files).
-- **Encryption**:
-  - TLS 1.2+ recommended (handled at infrastructure level).
-  - Sensitive data encrypted at rest where applicable.
-
-## API Security
-
-The application uses **Helmet** to set secure HTTP headers:
-
-- Content Security Policy (CSP)
-- HSTS
-- X-Frame-Options
-- X-Powered-By disabled
-
-```typescript
-app.use(helmet())
-```
-
-## CI/CD Security Scanning (DevSecOps)
-
-Our pipeline includes automated security checks on every push to `master`:
-
-1. **Static Analysis (SAST)**:
-   - **Trivy FS Scan**: Scans source code for vulnerabilities and misconfigurations.
-   - **Linting**: ESLint enforces code quality and security best practices.
-2. **Container Security**:
-   - **Trivy Container Scan**: Scans the built Docker image for OS-level vulnerabilities.
-3. **Dynamic Analysis (DAST)**:
-   - **OWASP ZAP**: Performs a baseline scan on the running application in the CI environment to detect runtime vulnerabilities (XSS, SQLi, etc.).
-4. **Reporting**: All security scan results are uploaded to the GitHub "Security" tab.
-
-## Reporting a Vulnerability
-
-If you find a security issue, please do not open a public issue. Instead, send an email to the maintainer or use the GitHub Security Advisory feature.
-
 ------- file: ./.zap/rules.tsv -------
 10027	IGNORE	(Information Disclosure - Suspicious Comments in Swagger UI)
 10096	IGNORE	(Timestamp Disclosure - Unix in Swagger UI)
@@ -345,76 +126,6 @@ export default [
   prettierConfig
 ]
 
-------- file: ./DEPLOYMENT.md -------
-# Deployment Documentation
-
-This document describes the deployment process and operational strategy for the project.
-
-## 1. Environment Requirements
-
-- **Docker**: Version 20.10+
-- **Docker Compose**: Version 2.0+
-- **Node.js**: Version 24+ (for local development/builds)
-
-## 2. Infrastructure Overview
-
-The application is containerized and designed to run in a clustered environment.
-
-- **App Server**: Node.js (ESM) managed by **PM2** for process monitoring and clustering.
-- **Database**: MySQL 8.
-- **Cache**: Redis (integration-ready).
-- **Process Manager**: PM2 (running in `pm2-runtime` mode within the container).
-
-## 3. Deployment Pipeline (CI/CD)
-
-We use **GitHub Actions** for our CI/CD pipeline (`.github/workflows/ci.yml`):
-
-1. **Validate**: Linting and Security Scans (Trivy, OWASP ZAP).
-2. **Test**: Runs Unit and Integration tests.
-3. **Build**: Creates a production Docker image.
-4. **Push**: Pushes the image to **Docker Hub** (`gary003/rest_api_nodejs_typescript_esm:latest`).
-
-## 4. Manual Deployment
-
-To deploy manually using Docker Compose:
-
-```bash
-# Pull the latest image
-docker compose pull app
-
-# Start the stack in detached mode
-docker compose up -d
-```
-
-To reconstruct the environment from scratch:
-
-```bash
-npm run start
-```
-
-## 5. Configuration (Environment Variables)
-
-All configuration is handled via environment variables. Key variables include:
-
-- `NODE_ENV`: `production`, `development`, or `test`.
-- `DB_URI`: Fully qualified MySQL connection string.
-- `JWT_SECRET_KEY`: Secret for signing access tokens.
-- `CRYPTO_SECRET_KEY`: Secret for data encryption at rest.
-
-## 6. Monitoring & Logs
-
-- **Logs**: PM2 logs are piped to stdout/stderr and captured by Docker's logging driver.
-  - Access logs: `docker compose logs -f app`
-- **Health Checks**: The application exposes a health endpoint at `/api/health`.
-- **Metrics/Tracing**: OpenTelemetry hooks are integrated and can be pointed to an OTLP collector.
-
-## 7. Scaling
-
-The application is stateless and can be scaled horizontally.
-
-- In Docker Compose: `docker compose up -d --scale app=3`
-- PM2 handles internal clustering within each container instance based on `ecosystem.config.js`.
-
 ------- file: ./scripts/test_all.sh -------
 #!/bin/bash
 set -e
@@ -430,7 +141,7 @@ mkdir -p coverage/tmp
 
 # Run all tests (Integration, Load, Unit) with V8 coverage enabled
 export NODE_V8_COVERAGE=coverage/tmp
-npx vitest run './tests/integration' './tests/load' './tests/unit/v1'
+npx vitest run './tests/integration' './tests/unit/v1'
 
 # Generate coverage report
 npx c8 report --temp-directory coverage/tmp -r text -r lcov
@@ -2209,11 +1920,18 @@ import { execSync } from 'node:child_process'
  * @type {string}
  **/
 const composeFilePath: string = '.'
+
 /**
  * @description Name of the docker-compose file
  * @type {string}
  **/
 const composeFile: string = 'docker-compose.yaml'
+
+/**
+ * @description Global variable to store the test environment
+ * @type {StartedDockerComposeEnvironment | null}
+ **/
+let globalDockerTestEnv: StartedDockerComposeEnvironment | null = null
 
 /**
  * @description In a real project, you would use a .env file for environment variables
@@ -2233,40 +1951,6 @@ export const getDockerTestEnvVariables = (): Record<string, string> => {
     DB_DATABASE_NAME: 'mydb',
     DB_PORT: '3306',
     LOGLEVEL: 'debug'
-  }
-}
-
-/**
- * @description Global variable to store the test environment
- * @type {StartedDockerComposeEnvironment | null}
- **/
-let globalDockerTestEnv: StartedDockerComposeEnvironment | null = null
-
-/**
- * @description Vitest global setup function (only launches the dockerized test environment once)
- * @returns {Promise<void>}
- **/
-export const setup = async (): Promise<void> => {
-  logger.debug('Starting Vitest Global Setup - Initializing Docker Compose (with testcontainers) ...')
-
-  const testEnvVariables = getDockerTestEnvVariables()
-
-  logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
-  logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
-
-  try {
-    globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
-      .withBuild()
-      .withPullPolicy(PullPolicy.defaultPolicy())
-      .withEnvironment(testEnvVariables)
-      .withWaitStrategy('db', Wait.forHealthCheck())
-      .withWaitStrategy('app', Wait.forHealthCheck())
-      .up(['app', 'db'])
-
-    logger.debug('Docker Compose test environment is ready!')
-  } catch (error) {
-    logger.error(`Failed to start Docker Compose environment: ${error}`)
-    throw new Error(`error during Docker Compose setup: ${error}`)
   }
 }
 
@@ -2313,6 +1997,36 @@ const getDbContainer = (dockerTestEnv: StartedDockerComposeEnvironment) => {
   const dbKey = Object.keys(containers).find((key: string) => key.includes('db'))
 
   return dbKey ? containers[dbKey] : undefined
+}
+
+/**
+ * @description Vitest global setup function (only launches the dockerized test environment once)
+ * @returns {Promise<void>}
+ **/
+export const setup = async (): Promise<void> => {
+  logger.debug('Starting Vitest Global Setup')
+
+  const testEnvVariables = getDockerTestEnvVariables()
+
+  logger.debug(`testEnvVariables: ${JSON.stringify(testEnvVariables, null, 2)}`)
+  logger.debug(`getTestUrls(): ${JSON.stringify(getTestUrls(), null, 2)}`)
+
+  logger.debug('Initializing the dockerized test environment (with testcontainers) ...')
+
+  try {
+    globalDockerTestEnv = await new DockerComposeEnvironment(composeFilePath, composeFile)
+      .withBuild()
+      .withPullPolicy(PullPolicy.defaultPolicy())
+      .withEnvironment(testEnvVariables)
+      .withWaitStrategy('db', Wait.forHealthCheck())
+      .withWaitStrategy('app', Wait.forHealthCheck())
+      .up(['app', 'db'])
+
+    logger.debug('Docker Compose test environment is ready!')
+  } catch (error) {
+    logger.error(`Failed to start Docker Compose environment: ${String(error)}`)
+    throw new Error(`error during Docker Compose setup: ${String(error)}`)
+  }
 }
 
 /**
@@ -2456,9 +2170,6 @@ Explore the detailed project documentation:
 - [**Security**](./SECURITY.md) - SAST/DAST, encryption, and protection practices.
 - [**API Guide**](./API.md) - Endpoint overview, request/response formats.
 - [**Deployment**](./DEPLOYMENT.md) - Docker Hub, CI/CD, and production operations.
-- [**Codes of Conduct**](./CODE_OF_CONDUCT.md) - Community standards and pledge.
-
----
 
 ## Description
 
@@ -2767,34 +2478,39 @@ volumes:
 ------- file: ./vitest.config.ts -------
 import { defineConfig } from 'vitest/config'
 
+const globalSetup = process.env.UNIT_TEST == 'true' ? './tests/vitest.setup.unit.ts' : './tests/vitest.setup.ts'
+
+const filesToExclude = [
+  'src/v1/infrastructure/observability/**',
+  'src/v1/infrastructure/persistence/database/db_volume/**',
+  'src/v1/infrastructure/persistence/database/db_scripts/**',
+  './**/*dto.ts',
+  '**/*.db',
+  '**/db_file_volume/**',
+  '**/sqlite/**'
+]
+
+if (process.env.UNIT_TEST === 'true') {
+  filesToExclude.push('src/v1/infrastructure', 'src/v1/domain', 'src/v1/helpers')
+}
+
 export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    globalSetup: [process.env.UNIT_TEST === 'true' ? './tests/vitest.setup.unit.ts' : './tests/vitest.setup.ts'],
+    globalSetup,
     // This ensures Vitest looks for the right files regardless of ext
     include: ['./tests/**/*.spec.ts', './tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       include: ['src/v1/**'],
-      exclude: [
-        process.env.UNIT_TEST === 'true' ? 'src/v1/infrastructure' : '',
-        process.env.UNIT_TEST === 'true' ? 'src/v1/domain' : '',
-        process.env.UNIT_TEST === 'true' ? 'src/v1/helpers' : '',
-        'src/v1/infrastructure/observability/**',
-        'src/v1/infrastructure/persistence/database/db_volume/**',
-        'src/v1/infrastructure/persistence/database/db_scripts/**',
-        './**/*dto.ts',
-        '**/*.db',
-        '**/db_file_volume/**',
-        '**/sqlite/**'
-      ]
-      // thresholds: {
-      //   branches: 80,
-      //   lines: 80,
-      //   functions: 80,
-      //   statements: 80
-      // }
+      exclude: filesToExclude,
+      thresholds: {
+        branches: 80,
+        lines: 80,
+        functions: 80,
+        statements: 80
+      }
     }
   }
 })
@@ -4374,7 +4090,7 @@ const getConnectionOptions = async (): Promise<DataSourceOptions> => {
     return {
       ...baseOptions,
       database: process.env.DB_DATABASE_NAME, // Path to sqlite file
-      flags: 0x00000040 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE (optional, but good for explicit control)
+      flags: 0x00000004 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE
     } as DataSourceOptions
   }
 
@@ -4477,7 +4193,6 @@ const userRouter = Router()
 
 userRouter.route('/').get(getAllUsersController).post(createUserController)
 
-// New route for transferring money
 userRouter.route('/transfer').post(transferMoneyController)
 
 userRouter.route('/stream').get(getUsersStreamController)
@@ -5632,16 +5347,16 @@ server.on('error', (error) => {
   process.exit(1)
 })
 
-try {
-  logger.info('Starting node-sdk tracing ...')
-  sdk.start()
-  logger.info('node-sdk tracing started')
-} catch (error) {
-  logger.error('Error starting node-sdk tracing', String(error))
-}
+// try {
+//   logger.info('Starting node-sdk tracing ...')
+//   sdk.start()
+//   logger.info('node-sdk tracing started')
+// } catch (error) {
+//   logger.error('Error starting node-sdk tracing', String(error))
+// }
 
 server.on('listening', async () => {
-  if (!process.env.production) logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
+  if (process.env.NODE_ENV !== 'production') logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`)
   if (process.send) process.send('ready')
 
   // Database Connection Pre-heating
@@ -5703,75 +5418,15 @@ export const sdk = new NodeSDK({
 
 export default sdk
 
-------- file: ./API.md -------
-# API Documentation
-
-This project provides a robust REST API for managing users and wallet transactions.
-
-## 1. General Information
-
-- **Base URL**: `/api/`
-- **Format**: All requests and responses use `application/json`.
-- **Versioning**: Incremental versioning in the URL path (current: `v1`).
-
-## 2. Global Endpoints
-
-- **Health Check**: `GET /api/health`
-  - Returns the status of the API and its dependencies (DB, Redis).
-- **Documentation**: `GET /api/apiDocumentation`
-  - Interactive Swagger UI documentation.
-
-## 3. Core Resources
-
-### User Management
-
-- `GET /user/`: List all users.
-- `GET /user/stream`: Stream users (NDJSON).
-- `GET /user/:id`: Get specific user details.
-- `POST /user/`: Create a new user.
-- `DELETE /user/:id`: Remove a user (Admin only).
-
-### Financial Transactions
-
-- `POST /user/transfer`: Transfer money between two users.
-  - Requires: `senderId`, `receiverId`, `amount`, `currency`.
-
-## 4. Authentication
-
-The API uses **JWT (JSON Web Tokens)** for protected routes.
-
-- Format: `Authorization: Bearer <token>`
-- Tokens are generated upon login/registration.
-
-## 5. Standard Responses
-
-{
-"status": "error",
-"message": "Human readable error message",
-"code": "ERROR_CODE"
-}
-
-## 6. Error Codes
-
-- `BAD_REQUEST`: Invalid input parameters.
-- `UNAUTHORIZED`: Missing or invalid token.
-- `FORBIDDEN`: User does not have required permissions (e.g., non-admin trying to delete).
-- `NOT_FOUND`: Resource does not exist.
-- `INTERNAL_ERROR`: Unexpected server error.
-
----
-
-_Note: For detailed parameter definitions and schemas, refer to the [Swagger Documentation](http://localhost:8080)._
-
 ------- file: ./ecosystem.config.js -------
 export const apps = [
   {
     name: 'server',
     script: './dist/bin/server.js',
     exec_mode: 'cluster',
-    instances: 1,
+    instances: 4,
     wait_ready: true,
-    listen_timeout: 3000
+    listen_timeout: 30000
   }
 ]
 
@@ -6381,31 +6036,6 @@ export type customerWalletFromTableDBStream = {
     wallet_soft_currency: number;
 };
 
-------- file: ./dist/v1/infrastructure/persistence/database/customer/userWalletDB.dto.js.map -------
-{"version":3,"file":"userWalletDB.dto.js","sourceRoot":"","sources":["../../../../../../src/v1/infrastructure/persistence/database/customer/userWalletDB.dto.ts"],"names":[],"mappings":""}
-------- file: ./dist/v1/infrastructure/persistence/database/customer/userWalletDB.dto.d.ts -------
-import { userWalletDTO } from '../../../../services/user/dto.js';
-export type customerWalletDBDTO = userWalletDTO;
-export type customerWalletFromTableDB = {
-    customer_id: string;
-    firstname: string;
-    lastname: string;
-    Wallet: {
-        wallet_id: string;
-        hard_currency: number;
-        soft_currency: number;
-    };
-};
-export type customerWalletFromTableDBStream = {
-    customer_customer_id: string;
-    customer_firstname: string;
-    customer_lastname: string;
-    wallet_customer_id: string;
-    wallet_wallet_id: string;
-    wallet_hard_currency: number;
-    wallet_soft_currency: number;
-};
-
 ------- file: ./dist/v1/infrastructure/persistence/database/customer/index.js.map -------
 {"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../../../src/v1/infrastructure/persistence/database/customer/index.ts"],"names":[],"mappings":"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"}
 ------- file: ./dist/v1/infrastructure/persistence/database/customer/entity.js -------
@@ -6444,9 +6074,6 @@ Customer = __decorate([
 ], Customer);
 export { Customer };
 //# sourceMappingURL=entity.js.map
-------- file: ./dist/v1/infrastructure/persistence/database/customer/userWalletDB.dto.js -------
-export {};
-//# sourceMappingURL=userWalletDB.dto.js.map
 ------- file: ./dist/v1/infrastructure/persistence/database/customer/entity.js.map -------
 {"version":3,"file":"entity.js","sourceRoot":"","sources":["../../../../../../src/v1/infrastructure/persistence/database/customer/entity.ts"],"names":[],"mappings":";;;;;;;;;AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,EAAE,aAAa,EAAE,MAAM,SAAS,CAAA;AAGhD,IAAM,QAAQ,GAAd,MAAM,QAAQ;CAepB,CAAA;AAbC;IADC,aAAa,CAAC,SAAS,CAAC;;6CACL;AAMpB;IAJC,MAAM,CAAC;QACN,IAAI,EAAE,SAAS;QACf,QAAQ,EAAE,KAAK;KAChB,CAAC;;2CACgB;AAMlB;IAJC,MAAM,CAAC;QACN,IAAI,EAAE,SAAS;QACf,QAAQ,EAAE,KAAK;KAChB,CAAC;;0CACe;AAdN,QAAQ;IADpB,MAAM,EAAE;GACI,QAAQ,CAepB"}
 ------- file: ./dist/v1/infrastructure/persistence/database/customer/index.d.ts -------
@@ -6803,7 +6430,7 @@ export declare const rollBackAndQuitTransactionRunner: (queryRunner: QueryRunner
 export declare const acquireLockOnWallet: (queryRunner: QueryRunner, walletId: string) => Promise<boolean>;
 
 ------- file: ./dist/v1/infrastructure/persistence/database/db_connection/connector.js.map -------
-{"version":3,"file":"connector.js","sourceRoot":"","sources":["../../../../../../src/v1/infrastructure/persistence/database/db_connection/connector.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,uBAAuB,CAAA;AAChD,OAAO,EAAE,MAAM,EAAE,MAAM,qBAAqB,CAAA;AAC5C,OAAO,EAAqB,UAAU,EAAE,MAAM,SAAS,CAAA;AACvD,OAAO,EAAE,EAAE,IAAI,MAAM,EAAE,MAAM,MAAM,CAAA;AACnC,OAAO,EAAE,MAAM,EAAE,MAAM,qCAAqC,CAAA;AAE5D;;;GAGG;AACH,MAAM,oBAAoB,GAAG,KAAK,IAAgC,EAAE;IAClE,MAAM,QAAQ,GAAG,OAAO,CAAC,GAAG,CAAC,SAAS,KAAK,QAAQ,CAAA;IAEnD,MAAM,WAAW,GAAG;QAClB,IAAI,EAAE,iBAAiB,MAAM,EAAE,EAAE,EAAE,yBAAyB;QAC5D,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,SAAS,EAAE,sCAAsC;QACnE,QAAQ,EAAE,CAAC,QAAQ,EAAE,MAAM,CAAC,EAAE,iCAAiC;QAC/D,WAAW,EAAE,KAAK,EAAE,oBAAoB;QACxC,gBAAgB,EAAE,CAAC,GAAU,EAAE,EAAE,CAAC,MAAM,CAAC,KAAK,CAAC,wBAAwB,EAAE,GAAG,CAAC,CAAC,qBAAqB;KACpG,CAAA;IAED,IAAI,QAAQ,EAAE,CAAC;QACb,OAAO;YACL,GAAG,WAAW;YACd,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,gBAAgB,EAAE,sBAAsB;YAC9D,KAAK,EAAE,UAAU,GAAG,UAAU,CAAC,yEAAyE;SACpF,CAAA;IACxB,CAAC;IAED,OAAO;QACL,GAAG,WAAW;QACd,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,OAAO,EAAE,gBAAgB;QAC3C,GAAG,EAAE,OAAO,CAAC,GAAG,CAAC,MAAM,EAAE,oBAAoB;QAC7C,IAAI,EAAE,MAAM,CAAC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,EAAE,gBAAgB;QACnD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,oBAAoB;QACvD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,oBAAoB;QACvD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,gBAAgB,EAAE,gBAAgB;QACxD,QAAQ,EAAE,EAAE,EAAE,8BAA8B;QAC5C,WAAW,EAAE,KAAK;QAClB,KAAK,EAAE;YACL,eAAe,EAAE,EAAE,EAAE,qCAAqC;YAC1D,UAAU,EAAE,CAAC,CAAC,8BAA8B;SAC7C;KACmB,CAAA;AACxB,CAAC,CAAA;AAED;;;;GAIG;AACH,MAAM,CAAC,MAAM,cAAc,GAAG,KAAK,IAAyB,EAAE;IAC5D,IAAI,CAAC;QACH,MAAM,SAAS,GAAsB,MAAM,oBAAoB,EAAE,CAAA,CAAC,yBAAyB;QAC3F,MAAM,UAAU,GAAe,IAAI,UAAU,CAAC,SAAS,CAAC,CAAA,CAAC,wBAAwB;QACjF,MAAM,UAAU,CAAC,UAAU,EAAE,CAAA,CAAC,4BAA4B;QAC1D,OAAO,UAAU,CAAA;IACnB,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,MAAM,YAAY,GAAG,6CAA6C,MAAM,CAAC,KAAK,CAAC,EAAE,CAAA;QACjF,MAAM,CAAC,KAAK,CAAC,YAAY,CAAC,CAAA,CAAC,uBAAuB;QAClD,MAAM,IAAI,KAAK,CAAC,YAAY,CAAC,CAAA;IAC/B,CAAC;AACH,CAAC,CAAA"}
+{"version":3,"file":"connector.js","sourceRoot":"","sources":["../../../../../../src/v1/infrastructure/persistence/database/db_connection/connector.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,uBAAuB,CAAA;AAChD,OAAO,EAAE,MAAM,EAAE,MAAM,qBAAqB,CAAA;AAC5C,OAAO,EAAqB,UAAU,EAAE,MAAM,SAAS,CAAA;AACvD,OAAO,EAAE,EAAE,IAAI,MAAM,EAAE,MAAM,MAAM,CAAA;AACnC,OAAO,EAAE,MAAM,EAAE,MAAM,qCAAqC,CAAA;AAE5D;;;GAGG;AACH,MAAM,oBAAoB,GAAG,KAAK,IAAgC,EAAE;IAClE,MAAM,QAAQ,GAAG,OAAO,CAAC,GAAG,CAAC,SAAS,KAAK,QAAQ,CAAA;IAEnD,MAAM,WAAW,GAAG;QAClB,IAAI,EAAE,iBAAiB,MAAM,EAAE,EAAE,EAAE,yBAAyB;QAC5D,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,SAAS,EAAE,sCAAsC;QACnE,QAAQ,EAAE,CAAC,QAAQ,EAAE,MAAM,CAAC,EAAE,iCAAiC;QAC/D,WAAW,EAAE,KAAK,EAAE,oBAAoB;QACxC,gBAAgB,EAAE,CAAC,GAAU,EAAE,EAAE,CAAC,MAAM,CAAC,KAAK,CAAC,wBAAwB,EAAE,GAAG,CAAC,CAAC,qBAAqB;KACpG,CAAA;IAED,IAAI,QAAQ,EAAE,CAAC;QACb,OAAO;YACL,GAAG,WAAW;YACd,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,gBAAgB,EAAE,sBAAsB;YAC9D,KAAK,EAAE,UAAU,GAAG,UAAU,CAAC,+BAA+B;SAC1C,CAAA;IACxB,CAAC;IAED,OAAO;QACL,GAAG,WAAW;QACd,IAAI,EAAE,OAAO,CAAC,GAAG,CAAC,OAAO,EAAE,gBAAgB;QAC3C,GAAG,EAAE,OAAO,CAAC,GAAG,CAAC,MAAM,EAAE,oBAAoB;QAC7C,IAAI,EAAE,MAAM,CAAC,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,EAAE,gBAAgB;QACnD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,oBAAoB;QACvD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,WAAW,EAAE,oBAAoB;QACvD,QAAQ,EAAE,OAAO,CAAC,GAAG,CAAC,gBAAgB,EAAE,gBAAgB;QACxD,QAAQ,EAAE,EAAE,EAAE,8BAA8B;QAC5C,WAAW,EAAE,KAAK;QAClB,KAAK,EAAE;YACL,eAAe,EAAE,EAAE,EAAE,qCAAqC;YAC1D,UAAU,EAAE,CAAC,CAAC,8BAA8B;SAC7C;KACmB,CAAA;AACxB,CAAC,CAAA;AAED;;;;GAIG;AACH,MAAM,CAAC,MAAM,cAAc,GAAG,KAAK,IAAyB,EAAE;IAC5D,IAAI,CAAC;QACH,MAAM,SAAS,GAAsB,MAAM,oBAAoB,EAAE,CAAA,CAAC,yBAAyB;QAC3F,MAAM,UAAU,GAAe,IAAI,UAAU,CAAC,SAAS,CAAC,CAAA,CAAC,wBAAwB;QACjF,MAAM,UAAU,CAAC,UAAU,EAAE,CAAA,CAAC,4BAA4B;QAC1D,OAAO,UAAU,CAAA;IACnB,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,MAAM,YAAY,GAAG,6CAA6C,MAAM,CAAC,KAAK,CAAC,EAAE,CAAA;QACjF,MAAM,CAAC,KAAK,CAAC,YAAY,CAAC,CAAA,CAAC,uBAAuB;QAClD,MAAM,IAAI,KAAK,CAAC,YAAY,CAAC,CAAA;IAC/B,CAAC;AACH,CAAC,CAAA"}
 ------- file: ./dist/v1/infrastructure/persistence/database/db_connection/connector.js -------
 import { Customer } from '../customer/entity.js';
 import { Wallet } from '../wallet/entity.js';
@@ -6827,7 +6454,7 @@ const getConnectionOptions = async () => {
         return {
             ...baseOptions,
             database: process.env.DB_DATABASE_NAME, // Path to sqlite file
-            flags: 0x00000040 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE (optional, but good for explicit control)
+            flags: 0x00000004 | 0x00000002 // OPEN_CREATE | OPEN_READWRITE
         };
     }
     return {
@@ -7025,70 +6652,8 @@ export const acquireLockOnWallet = async (queryRunner, walletId) => {
     return lockResult.length > 0; // Return true if lock is acquired
 };
 //# sourceMappingURL=connectionFile.js.map
-------- file: ./dist/v1/presentation/routes/user/apiResponse.dto.js -------
-export {};
-//# sourceMappingURL=apiResponse.dto.js.map
-------- file: ./dist/v1/presentation/routes/user/error.dto.d.ts -------
-import { errorType } from '../../../domain/error.js';
-export declare const errorAPIUSER: {
-    readonly errorAPIGetAllUsers: {
-        readonly name: "errorAPIGetAllUsers";
-        readonly message: "Error - Impossible to get any user from database";
-    };
-    readonly errorAPIUserCreation: {
-        readonly name: "errorAPIUserCreation";
-        readonly message: "Error - Impossible to save the new user";
-    };
-    readonly errorAPIGetUser: {
-        readonly name: "errorAPIGetUser";
-        readonly message: "Error - Impossible to found the requested user from database";
-    };
-    readonly errorAPIInvalidUserId: {
-        readonly name: "errorAPIInvalidUserId";
-        readonly message: "Error - The userId provided is wrong";
-    };
-    readonly errorAPIDeleteUser: {
-        readonly name: "errorAPIDeleteUser";
-        readonly message: "Error - Impossible to delete the user from database";
-    };
-    readonly errorAPIUserTransfertWrongParams: {
-        readonly name: "errorAPIUserTransfertWrongParams";
-        readonly message: "Error - The params provided are wrong";
-    };
-    readonly errorAPIUserTransferIllegalAmount: {
-        readonly name: "errorAPIUserTransferIllegalAmount";
-        readonly message: "Error - The amount for transferingmust be > 0 ";
-    };
-    readonly errorAPIUserTransferNoResults: {
-        readonly name: "errorAPIUserTransferNoResults";
-        readonly message: "Error - The query returned no results";
-    };
-    readonly errorAPIUserTransferSelf: {
-        readonly name: "errorAPIUserTransferSelf";
-        readonly message: "Error - Same id for receiver and sender";
-    };
-};
-export declare const errorValidationUser: Record<string, errorType>;
-
-------- file: ./dist/v1/presentation/routes/user/apiResponse.dto.d.ts -------
-import { userWalletDTO } from '../../../services/user/dto.js';
-export type apiResponseGetAllUserType = {
-    data: userWalletDTO[];
-};
-export type apiResponseGetUserType = {
-    data: userWalletDTO;
-};
-export type apiResponseDeleteUserType = {
-    data: boolean;
-};
-export type apiResponseCreateUserType = apiResponseGetUserType;
-
 ------- file: ./dist/v1/presentation/routes/user/index.js.map -------
-{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../../src/v1/presentation/routes/user/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAA;AAChC,OAAO,EAAE,aAAa,EAAE,MAAM,yCAAyC,CAAA;AACvE,OAAO,EAAE,YAAY,EAAE,MAAM,wCAAwC,CAAA;AACrE,OAAO,EAAE,OAAO,EAAE,MAAM,mCAAmC,CAAA;AAC3D,OAAO,EACL,oBAAoB,EACpB,wBAAwB,EACxB,qBAAqB,EACrB,wBAAwB,EACxB,qBAAqB,EACrB,uBAAuB,EACxB,MAAM,iCAAiC,CAAA;AAExC,MAAM,UAAU,GAAG,MAAM,EAAE,CAAA;AAE3B,UAAU,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,qBAAqB,CAAC,CAAC,IAAI,CAAC,oBAAoB,CAAC,CAAA;AAE3E,mCAAmC;AACnC,UAAU,CAAC,KAAK,CAAC,WAAW,CAAC,CAAC,IAAI,CAAC,uBAAuB,CAAC,CAAA;AAE3D,UAAU,CAAC,KAAK,CAAC,SAAS,CAAC,CAAC,GAAG,CAAC,wBAAwB,CAAC,CAAA;AAEzD,UAAU,CAAC,KAAK,CAAC,UAAU,CAAC,CAAC,GAAG,CAAC,aAAa,EAAE,qBAAqB,CAAC,CAAC,MAAM,CAAC,YAAY,EAAE,OAAO,EAAE,aAAa,EAAE,wBAAwB,CAAC,CAAA;AAE7I,eAAe,UAAU,CAAA"}
-------- file: ./dist/v1/presentation/routes/user/apiResponse.dto.js.map -------
-{"version":3,"file":"apiResponse.dto.js","sourceRoot":"","sources":["../../../../../src/v1/presentation/routes/user/apiResponse.dto.ts"],"names":[],"mappings":""}
-------- file: ./dist/v1/presentation/routes/user/error.dto.js.map -------
-{"version":3,"file":"error.dto.js","sourceRoot":"","sources":["../../../../../src/v1/presentation/routes/user/error.dto.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,MAAM,YAAY,GAAG;IAC1B,mBAAmB,EAAE;QACnB,IAAI,EAAE,qBAAqB;QAC3B,OAAO,EAAE,kDAAkD;KAC5D;IACD,oBAAoB,EAAE;QACpB,IAAI,EAAE,sBAAsB;QAC5B,OAAO,EAAE,yCAAyC;KACnD;IACD,eAAe,EAAE;QACf,IAAI,EAAE,iBAAiB;QACvB,OAAO,EAAE,8DAA8D;KACxE;IACD,qBAAqB,EAAE;QACrB,IAAI,EAAE,uBAAuB;QAC7B,OAAO,EAAE,sCAAsC;KAChD;IACD,kBAAkB,EAAE;QAClB,IAAI,EAAE,oBAAoB;QAC1B,OAAO,EAAE,qDAAqD;KAC/D;IACD,gCAAgC,EAAE;QAChC,IAAI,EAAE,kCAAkC;QACxC,OAAO,EAAE,uCAAuC;KACjD;IACD,iCAAiC,EAAE;QACjC,IAAI,EAAE,mCAAmC;QACzC,OAAO,EAAE,gDAAgD;KAC1D;IACD,6BAA6B,EAAE;QAC7B,IAAI,EAAE,+BAA+B;QACrC,OAAO,EAAE,uCAAuC;KACjD;IACD,wBAAwB,EAAE;QACxB,IAAI,EAAE,0BAA0B;QAChC,OAAO,EAAE,yCAAyC;KACnD;CACO,CAAA;AAEV,MAAM,CAAC,MAAM,mBAAmB,GAA8B;IAC5D,gBAAgB,EAAE;QAChB,IAAI,EAAE,qBAAqB;QAC3B,OAAO,EAAE,uDAAuD;KACjE;CACO,CAAA"}
+{"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../../src/v1/presentation/routes/user/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAA;AAChC,OAAO,EAAE,aAAa,EAAE,MAAM,yCAAyC,CAAA;AACvE,OAAO,EAAE,YAAY,EAAE,MAAM,wCAAwC,CAAA;AACrE,OAAO,EAAE,OAAO,EAAE,MAAM,mCAAmC,CAAA;AAC3D,OAAO,EACL,oBAAoB,EACpB,wBAAwB,EACxB,qBAAqB,EACrB,wBAAwB,EACxB,qBAAqB,EACrB,uBAAuB,EACxB,MAAM,iCAAiC,CAAA;AAExC,MAAM,UAAU,GAAG,MAAM,EAAE,CAAA;AAE3B,UAAU,CAAC,KAAK,CAAC,GAAG,CAAC,CAAC,GAAG,CAAC,qBAAqB,CAAC,CAAC,IAAI,CAAC,oBAAoB,CAAC,CAAA;AAE3E,UAAU,CAAC,KAAK,CAAC,WAAW,CAAC,CAAC,IAAI,CAAC,uBAAuB,CAAC,CAAA;AAE3D,UAAU,CAAC,KAAK,CAAC,SAAS,CAAC,CAAC,GAAG,CAAC,wBAAwB,CAAC,CAAA;AAEzD,UAAU,CAAC,KAAK,CAAC,UAAU,CAAC,CAAC,GAAG,CAAC,aAAa,EAAE,qBAAqB,CAAC,CAAC,MAAM,CAAC,YAAY,EAAE,OAAO,EAAE,aAAa,EAAE,wBAAwB,CAAC,CAAA;AAE7I,eAAe,UAAU,CAAA"}
 ------- file: ./dist/v1/presentation/routes/user/index.d.ts -------
 declare const userRouter: import("express-serve-static-core").Router;
 export default userRouter;
@@ -7101,58 +6666,11 @@ import { isAdmin } from '../../middlewares/auth/isAdmin.js';
 import { createUserController, deleteUserByIdController, getAllUsersController, getUsersStreamController, getUserByIdController, transferMoneyController } from '../../controllers/user/index.js';
 const userRouter = Router();
 userRouter.route('/').get(getAllUsersController).post(createUserController);
-// New route for transferring money
 userRouter.route('/transfer').post(transferMoneyController);
 userRouter.route('/stream').get(getUsersStreamController);
 userRouter.route('/:userId').get(isValidUserId, getUserByIdController).delete(isAuthorized, isAdmin, isValidUserId, deleteUserByIdController);
 export default userRouter;
 //# sourceMappingURL=index.js.map
-------- file: ./dist/v1/presentation/routes/user/error.dto.js -------
-export const errorAPIUSER = {
-    errorAPIGetAllUsers: {
-        name: 'errorAPIGetAllUsers',
-        message: 'Error - Impossible to get any user from database'
-    },
-    errorAPIUserCreation: {
-        name: 'errorAPIUserCreation',
-        message: 'Error - Impossible to save the new user'
-    },
-    errorAPIGetUser: {
-        name: 'errorAPIGetUser',
-        message: 'Error - Impossible to found the requested user from database'
-    },
-    errorAPIInvalidUserId: {
-        name: 'errorAPIInvalidUserId',
-        message: 'Error - The userId provided is wrong'
-    },
-    errorAPIDeleteUser: {
-        name: 'errorAPIDeleteUser',
-        message: 'Error - Impossible to delete the user from database'
-    },
-    errorAPIUserTransfertWrongParams: {
-        name: 'errorAPIUserTransfertWrongParams',
-        message: 'Error - The params provided are wrong'
-    },
-    errorAPIUserTransferIllegalAmount: {
-        name: 'errorAPIUserTransferIllegalAmount',
-        message: 'Error - The amount for transferingmust be > 0 '
-    },
-    errorAPIUserTransferNoResults: {
-        name: 'errorAPIUserTransferNoResults',
-        message: 'Error - The query returned no results'
-    },
-    errorAPIUserTransferSelf: {
-        name: 'errorAPIUserTransferSelf',
-        message: 'Error - Same id for receiver and sender'
-    }
-};
-export const errorValidationUser = {
-    errorParamUserId: {
-        name: 'errorValidationUser',
-        message: 'Error - Wrong userId info in route - middleware error'
-    }
-};
-//# sourceMappingURL=error.dto.js.map
 ------- file: ./dist/v1/presentation/routes/auth/index.js.map -------
 {"version":3,"file":"index.js","sourceRoot":"","sources":["../../../../../src/v1/presentation/routes/auth/index.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAA;AAChC,OAAO,EAAE,mBAAmB,EAAE,MAAM,+CAA+C,CAAA;AACnF,OAAO,EAAE,kBAAkB,EAAE,gBAAgB,EAAE,sBAAsB,EAAE,MAAM,iCAAiC,CAAA;AAE9G,MAAM,UAAU,GAAG,MAAM,EAAE,CAAA;AAE3B,UAAU,CAAC,KAAK,CAAC,WAAW,CAAC,CAAC,IAAI,CAAC,kBAAkB,CAAC,CAAA;AAEtD,UAAU,CAAC,KAAK,CAAC,SAAS,CAAC,CAAC,IAAI,CAAC,gBAAgB,CAAC,CAAA;AAElD,UAAU,CAAC,KAAK,CAAC,eAAe,CAAC,CAAC,IAAI,CAAC,mBAAmB,EAAE,sBAAsB,CAAC,CAAA;AAEnF,eAAe,UAAU,CAAA"}
 ------- file: ./dist/v1/presentation/routes/auth/index.d.ts -------
@@ -8545,16 +8063,15 @@ server.on('error', (error) => {
     shutdown();
     process.exit(1);
 });
-try {
-    logger.info('Starting node-sdk tracing ...');
-    sdk.start();
-    logger.info('node-sdk tracing started');
-}
-catch (error) {
-    logger.error('Error starting node-sdk tracing', String(error));
-}
+// try {
+//   logger.info('Starting node-sdk tracing ...')
+//   sdk.start()
+//   logger.info('node-sdk tracing started')
+// } catch (error) {
+//   logger.error('Error starting node-sdk tracing', String(error))
+// }
 server.on('listening', async () => {
-    if (!process.env.production)
+    if (process.env.NODE_ENV !== 'production')
         logger.info(`app running ... api documentation on http://${localIp}:${port} - NODE_ENV: ${process.env.NODE_ENV}`);
     if (process.send)
         process.send('ready');
@@ -8574,7 +8091,7 @@ process.on('SIGINT', shutdown);
 server.listen(port, '0.0.0.0');
 //# sourceMappingURL=server.js.map
 ------- file: ./dist/bin/server.js.map -------
-{"version":3,"file":"server.js","sourceRoot":"","sources":["../../src/bin/server.ts"],"names":[],"mappings":"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"}
+{"version":3,"file":"server.js","sourceRoot":"","sources":["../../src/bin/server.ts"],"names":[],"mappings":"AAAA,OAAO,eAAe,CAAA;AACtB,OAAO,KAAK,IAAI,MAAM,MAAM,CAAA;AAC5B,OAAO,GAAG,MAAM,cAAc,CAAA;AAC9B,OAAO,GAAG,MAAM,WAAW,CAAA;AAC3B,OAAO,EAAE,aAAa,EAAE,eAAe,EAAE,MAAM,2EAA2E,CAAA;AAC1H,OAAO,EAAE,MAAM,EAAE,MAAM,+BAA+B,CAAA;AAEtD,MAAM,OAAO,GAAW,OAAO,CAAC,GAAG,CAAC,QAAQ,IAAI,WAAW,CAAA;AAE3D,MAAM,IAAI,GAAW,MAAM,CAAC,OAAO,CAAC,GAAG,CAAC,QAAQ,CAAC,IAAI,IAAI,CAAA;AAEzD,MAAM,MAAM,GAAgB,IAAI,CAAC,YAAY,CAAC,GAAG,CAAC,CAAA;AAElD,oBAAoB;AACpB,MAAM,QAAQ,GAAG,KAAK,IAAI,EAAE;IAC1B,IAAI,CAAC;QACH,4BAA4B;QAC5B,MAAM,CAAC,IAAI,CAAC,sCAAsC,CAAC,CAAA;QACnD,MAAM,eAAe,EAAE,CAAA;QACvB,MAAM,CAAC,IAAI,CAAC,iCAAiC,CAAC,CAAA;QAC9C,qCAAqC;QACrC,MAAM,CAAC,IAAI,CAAC,0CAA0C,CAAC,CAAA;QACvD,iGAAiG;QACjG,oGAAoG;QACpG,4DAA4D;QAC5D,GAAG,CAAC,QAAQ,EAAE,CAAA;QACd,MAAM,CAAC,IAAI,CAAC,qCAAqC,CAAC,CAAA;QAClD,OAAO,CAAC,IAAI,CAAC,CAAC,CAAC,CAAA;IACjB,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,MAAM,CAAC,KAAK,CAAC,wBAAwB,EAAE,MAAM,CAAC,KAAK,CAAC,CAAC,CAAA;QACrD,OAAO,CAAC,IAAI,CAAC,CAAC,CAAC,CAAA;IACjB,CAAC;AACH,CAAC,CAAA;AAED,MAAM,CAAC,EAAE,CAAC,OAAO,EAAE,CAAC,KAAK,EAAE,EAAE;IAC3B,MAAM,CAAC,KAAK,CAAC,IAAI,CAAC,SAAS,CAAC,KAAK,CAAC,CAAC,CAAA;IACnC,QAAQ,EAAE,CAAA;IACV,OAAO,CAAC,IAAI,CAAC,CAAC,CAAC,CAAA;AACjB,CAAC,CAAC,CAAA;AAEF,QAAQ;AACR,iDAAiD;AACjD,gBAAgB;AAChB,4CAA4C;AAC5C,oBAAoB;AACpB,mEAAmE;AACnE,IAAI;AAEJ,MAAM,CAAC,EAAE,CAAC,WAAW,EAAE,KAAK,IAAI,EAAE;IAChC,IAAI,OAAO,CAAC,GAAG,CAAC,QAAQ,KAAK,YAAY;QAAE,MAAM,CAAC,IAAI,CAAC,+CAA+C,OAAO,IAAI,IAAI,gBAAgB,OAAO,CAAC,GAAG,CAAC,QAAQ,EAAE,CAAC,CAAA;IAC5J,IAAI,OAAO,CAAC,IAAI;QAAE,OAAO,CAAC,IAAI,CAAC,OAAO,CAAC,CAAA;IAEvC,kCAAkC;IAClC,IAAI,CAAC;QACH,MAAM,CAAC,IAAI,CAAC,iDAAiD,CAAC,CAAA;QAC9D,MAAM,aAAa,EAAE,CAAA;QACrB,MAAM,CAAC,IAAI,CAAC,wDAAwD,CAAC,CAAA;IACvE,CAAC;IAAC,OAAO,KAAK,EAAE,CAAC;QACf,MAAM,CAAC,IAAI,CAAC,gHAAgH,MAAM,CAAC,KAAK,CAAC,EAAE,CAAC,CAAA;IAC9I,CAAC;AACH,CAAC,CAAC,CAAA;AAEF,yBAAyB;AACzB,OAAO,CAAC,EAAE,CAAC,SAAS,EAAE,QAAQ,CAAC,CAAA;AAC/B,OAAO,CAAC,EAAE,CAAC,QAAQ,EAAE,QAAQ,CAAC,CAAA;AAE9B,MAAM,CAAC,MAAM,CAAC,IAAI,EAAE,SAAS,CAAC,CAAA"}
 ------- file: ./dist/bin/tracing.d.ts -------
 import { NodeSDK } from '@opentelemetry/sdk-node';
 export declare const sdk: NodeSDK;
@@ -8755,7 +8272,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       # Static Analysis - Trivy
       - name: Trivy filesystem scan
@@ -8880,7 +8397,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Run Lint
         run: npm run lint
@@ -8899,7 +8416,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Run all tests
         run: npm run test:ci
@@ -8929,7 +8446,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm i
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -8986,19 +8503,374 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+------- file: ./docs/TESTING.md -------
+# Testing Strategy & Documentation
+
+Internal documentation for the testing lifecycle and infrastructure of this project.
+
+## 1. Overview
+
+Our testing strategy follows the **Testing Pyramid**, but with a heavy focus on **Isolated Integration Tests** to ensure the "Clean Architecture" layers are correctly wired.
+
+- **Unit Tests**: Domain logic and individual services.
+- **Integration Tests**: End-to-end flow from API route to Database.
+- **Load Tests**: Load testing via `autocannon`.
+
+## 2. Tests Infrastructure (integration & load tests)
+
+### The Switch **from** Supertest to V8-Bind
+
+We moved away from mocking the server with `supertest` in favor of a **Dockerized V8-Bind Coverage** approach.
+
+#### **Why?**
+
+1. **Full-Stack Coverage**: Supertest only covers the application logic. V8-bind records coverage for _everything_ running inside the target Docker container, including infrastructure drivers (MySQL, Redis), middleware, and compiled artifacts.
+2. **Environment Parity**: Tests run against the exact same Docker image that is deployed to production.
+3. **No Mocking**: We test against real databases (containerized), not in-memory mocks.
+
+#### **How it works (The Lifecycle)**
+
+1. **Setup**: `testcontainers` spins up the `app` and `db` services.
+2. **Execution**: Vitest hits the containerized API via `fetch`.
+3. **Collection**: The Node.js process inside the container dumps coverage logic to a mounted volume (`/app/coverage/tmp`).
+4. **Teardown**:
+   - **Permission Fix**: Since Docker runs as root, we use a temporary Alpine container to `chmod` the coverage files so the host user can access them.
+   - **Path Mapping**: We programmatically rewrite paths in the V8 JSON files (e.g., from `/app/dist/` to your local folder) so reporting tools can map coverage back to the original `.ts` source files.
+
+## 3. Running Tests
+
+### Integration Tests
+
+Run tests and generate a unified coverage report:
+
+```bash
+npm run test:integration
+```
+
+### Unit Tests
+
+```bash
+npm run test:unit:v1
+```
+
+### All Tests (CI Pipeline)
+
+```bash
+npm run test
+```
+
+## 4. Technical Details
+
+### Key Files
+
+- `tests/vitest.setup.ts`: Global lifecycle management (Docker Orchestration & Post-processing).
+- `docker-compose.yaml`: Defensive configuration for the test environment.
+- `scripts/test_integration.sh`: Coordination of the V8 coverage pipeline.
+
+### POST-PROCESS: Path Mapping Logic
+
+To ensure coverage tools show the correct lines in your IDE, the setup script performs a search-and-replace on the raw V8 data:
+
+```typescript
+const newContent = content.replaceAll('/app/', process.cwd() + '/')
+```
+
+## 5. Troubleshooting
+
+- **Permission Denied**: If `coverage/tmp` is locked, the Alpine `chmod` fix in `vitest.setup.ts` usually resolves this.
+- **Container Timeout**: Increase the `Wait.forHealthCheck()` timeout in `vitest.setup.ts` if your machine is under heavy load.
+
+------- file: ./docs/ARCHITECTURE.md -------
+# Architecture Overview
+
+This project is a **production‑oriented REST API** built with **Node.js, TypeScript (ESM)** and **TypeORM**, designed around **clear boundaries, testability, and operational realism**.
+
+The architecture intentionally favors **clarity and correctness over premature abstraction**, while remaining scalable.
+
+---
+
+## High‑Level Principles
+
+- **Layered architecture** with strict dependency direction
+- **Environment‑driven behavior** (dev / test / prod)
+- **Explicit error handling** and failure modeling
+- **Testability as a first‑class concern**
+- **Operational awareness** (observability, retries, isolation)
+
+---
+
+## Clean Architecture Layers
+
+src/v1/
+├─ presentation/ → HTTP layer (Controllers, Routes, DTOs, Middlewares)
+├─ services/ → Pure Business Logic
+├─ domain/ → Entities, Value Objects, Aggregates
+└─ infrastructure/ → External Tools (Database, Redis, Logger, Observability)
+
+1. **Domain**: The core of the application. Contains entities and business rules. No dependencies on frameworks or libraries.
+2. **Application**: Coordinates tasks and delegates work to the domain.
+3. **Presentation**: Handles HTTP requests/responses. Translates API contracts to application calls.
+4. **Infrastructure**: Implementation of interfaces defined by outer layers (e.g., TypeORM repositories, Redis caching).
+
+---
+
+## Environment Strategy
+
+The system behaves differently depending on the environment, by design.
+
+| Environment | Database | Driver    | Purpose                                |
+| :---------- | :------- | :-------- | :------------------------------------- |
+| `dev`       | SQLite   | `sqlite3` | Fast local development, zero setup     |
+| `test`      | MySQL    | `mysql2`  | Integration tests in Docker containers |
+| `prod`      | MySQL    | `mysql2`  | Production environment                 |
+
+---
+
+## Persistence & Database
+
+- **TypeORM** is used as the ORM layer.
+- **Entities** live in `domain`.
+- **Repositories** and DB wiring live in `infrastructure`.
+
+---
+
+## Testing Strategy (The "Senior Pro" Approach)
+
+Testing is a first-class citizen in this architecture.
+
+### 1. Unit Tests
+
+- Focused on `domain` and `application` layers.
+- Fast, zero IO, zero database.
+
+### 2. Integration Tests (Black-Box)
+
+- Runs against a **real containerized MySQL** using `testcontainers`.
+- Uses a **V8-Bind Coverage** strategy:
+  - The app runs in a real Docker container.
+  - Coverage is collected natively by the V8 engine inside the container.
+  - Files are synced back to the host via volumes.
+  - This ensures 100% realistic coverage of the **Infrastructure** layer (drivers, middleware, etc.).
+
+### 3. Load Tests
+
+- Load testing using **Autocannon**.
+- Validates the system under stress (locking, pool limits).
+
+---
+
+## Observability & Operations
+
+The architecture is observability‑ready:
+
+- **Structured logging** via Winston.
+- **OpenTelemetry** integration (ready for traces/metrics).
+- **PM2** for process management in production.
+- **Health checks** for container orchestration (Kubernetes/Docker Compose ready).
+
+---
+
+## Summary
+
+This architecture is designed to:
+
+- Be easy to reason about.
+- Make failures visible.
+- Support long‑term maintenance.
+- Scale in **complexity before scale in size**.
+
+------- file: ./docs/SECURITY.md -------
+# Security Practices
+
+## Data Protection
+
+- **All inputs sanitized**: Using **Zod** for schema validation and TypeORM for parameterized SQL queries to prevent injection.
+- **Secrets management**:
+  - Never hardcoded - used GitHub Actions secrets for CI/CD.
+  - Environment variables are used for all sensitive configuration (`.env` files).
+- **Encryption**:
+  - TLS 1.2+ recommended (handled at infrastructure level).
+  - Sensitive data encrypted at rest where applicable.
+
+## API Security
+
+The application uses **Helmet** to set secure HTTP headers:
+
+- Content Security Policy (CSP)
+- HSTS
+- X-Frame-Options
+- X-Powered-By disabled
+
+```typescript
+app.use(helmet())
+```
+
+## CI/CD Security Scanning (DevSecOps)
+
+Our pipeline includes automated security checks on every push to `master`:
+
+1. **Static Analysis (SAST)**:
+   - **Trivy FS Scan**: Scans source code for vulnerabilities and misconfigurations.
+   - **Linting**: ESLint enforces code quality and security best practices.
+2. **Container Security**:
+   - **Trivy Container Scan**: Scans the built Docker image for OS-level vulnerabilities.
+3. **Dynamic Analysis (DAST)**:
+   - **OWASP ZAP**: Performs a baseline scan on the running application in the CI environment to detect runtime vulnerabilities (XSS, SQLi, etc.).
+4. **Reporting**: All security scan results are uploaded to the GitHub "Security" tab.
+
+## Reporting a Vulnerability
+
+If you find a security issue, please do not open a public issue. Instead, send an email to the maintainer or use the GitHub Security Advisory feature.
+
+------- file: ./docs/DEPLOYMENT.md -------
+# Deployment Documentation
+
+This document describes the deployment process and operational strategy for the project.
+
+## 1. Environment Requirements
+
+- **Docker**: Version 20.10+
+- **Docker Compose**: Version 2.0+
+- **Node.js**: Version 24+ (for local development/builds)
+
+## 2. Infrastructure Overview
+
+The application is containerized and designed to run in a clustered environment.
+
+- **App Server**: Node.js (ESM) managed by **PM2** for process monitoring and clustering.
+- **Database**: MySQL 8.
+- **Cache**: Redis (integration-ready).
+- **Process Manager**: PM2 (running in `pm2-runtime` mode within the container).
+
+## 3. Deployment Pipeline (CI/CD)
+
+We use **GitHub Actions** for our CI/CD pipeline (`.github/workflows/ci.yml`):
+
+1. **Validate**: Linting and Security Scans (Trivy, OWASP ZAP).
+2. **Test**: Runs Unit and Integration tests.
+3. **Build**: Creates a production Docker image.
+4. **Push**: Pushes the image to **Docker Hub** (`gary003/rest_api_nodejs_typescript_esm:latest`).
+
+## 4. Manual Deployment
+
+To deploy manually using Docker Compose:
+
+```bash
+# Pull the latest image
+docker compose pull app
+
+# Start the stack in detached mode
+docker compose up -d
+```
+
+To reconstruct the environment from scratch:
+
+```bash
+npm run start
+```
+
+## 5. Configuration (Environment Variables)
+
+All configuration is handled via environment variables. Key variables include:
+
+- `NODE_ENV`: `production`, `development`, or `test`.
+- `DB_URI`: Fully qualified MySQL connection string.
+- `JWT_SECRET_KEY`: Secret for signing access tokens.
+- `CRYPTO_SECRET_KEY`: Secret for data encryption at rest.
+
+## 6. Monitoring & Logs
+
+- **Logs**: PM2 logs are piped to stdout/stderr and captured by Docker's logging driver.
+  - Access logs: `docker compose logs -f app`
+- **Health Checks**: The application exposes a health endpoint at `/api/health`.
+- **Metrics/Tracing**: OpenTelemetry hooks are integrated and can be pointed to an OTLP collector.
+
+## 7. Scaling
+
+The application is stateless and can be scaled horizontally.
+
+- In Docker Compose: `docker compose up -d --scale app=3`
+- PM2 handles internal clustering within each container instance based on `ecosystem.config.js`.
+
+------- file: ./docs/API.md -------
+# API Documentation
+
+This project provides a robust REST API for managing users and wallet transactions.
+
+## 1. General Information
+
+- **Base URL**: `/api/`
+- **Format**: All requests and responses use `application/json`.
+- **Versioning**: Incremental versioning in the URL path (current: `v1`).
+
+## 2. Global Endpoints
+
+- **Health Check**: `GET /api/health`
+  - Returns the status of the API and its dependencies (DB, Redis).
+- **Documentation**: `GET /api/apiDocumentation`
+  - Interactive Swagger UI documentation.
+
+## 3. Core Resources
+
+### User Management
+
+- `GET /user/`: List all users.
+- `GET /user/stream`: Stream users (NDJSON).
+- `GET /user/:id`: Get specific user details.
+- `POST /user/`: Create a new user.
+- `DELETE /user/:id`: Remove a user (Admin only).
+
+### Financial Transactions
+
+- `POST /user/transfer`: Transfer money between two users.
+  - Requires: `senderId`, `receiverId`, `amount`, `currency`.
+
+## 4. Authentication
+
+The API uses **JWT (JSON Web Tokens)** for protected routes.
+
+- Format: `Authorization: Bearer <token>`
+- Tokens are generated upon login/registration.
+
+## 5. Standard Responses
+
+{
+"status": "error",
+"message": "Human readable error message",
+"code": "ERROR_CODE"
+}
+
+## 6. Error Codes
+
+- `BAD_REQUEST`: Invalid input parameters.
+- `UNAUTHORIZED`: Missing or invalid token.
+- `FORBIDDEN`: User does not have required permissions (e.g., non-admin trying to delete).
+- `NOT_FOUND`: Resource does not exist.
+- `INTERNAL_ERROR`: Unexpected server error.
+
+---
+
+_Note: For detailed parameter definitions and schemas, refer to the [Swagger Documentation](http://localhost:8080)._
+
 ------- file: ./Dockerfile -------
 FROM node:24-alpine
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl build-base python3
 
 WORKDIR /app
 
-COPY package*.json ./
+# Change ownership of /app to node user
+RUN chown -R node:node /app
 
-RUN npm ci
+# Switch to non-root user
+USER node
 
-COPY src ./src
-COPY ecosystem.config.js ./
-COPY tsconfig.json ./
+COPY --chown=node:node package*.json ./
+
+RUN npm install --legacy-peer-deps
+
+COPY --chown=node:node src ./src
+COPY --chown=node:node ecosystem.config.js ./
+COPY --chown=node:node tsconfig.json ./
 
 RUN npm run build:app
 
@@ -9047,10 +8919,11 @@ grafana_data_volume
 
 # Persistence volumes
 db_volume
+*db_file_volume*
 
-# # sqlite db file
-# *sqlite*
-# sqlite.db
+# sqlite db file
+*sqlite*
+sqlite.db
 
 # dump project file
 project_dump*
