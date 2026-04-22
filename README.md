@@ -65,21 +65,15 @@ Don't forget to restart your computer or session for the changes to be available
 
 - Clone the project
 
-  ```bash
-  git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
-  ```
+  `bash git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git`
 
 - Go into the project directory
 
-  ```bash
-  cd rest_api_nodejs_typescript_esm
-  ```
+  `bash cd rest_api_nodejs_typescript_esm`
 
 - Install the dependencies
 
-  ```bash
-  npm install
-  ```
+  `bash npm install`
 
 ## Start API
 
@@ -88,18 +82,14 @@ Don't forget to restart your computer or session for the changes to be available
 - Launch the app & DB (mysql)
   In a shell, at the root directory of the project, type:
 
-  ```bash
-  npm run start
-  ```
+  `bash npm run start`
 
 ### On Local Machine
 
 - Launch the app & DB (sqlite)
   In a shell, at the root directory of the project, type
 
-  ```bash
-  npm run dev:start
-  ```
+  `bash npm run dev:start`
 
 ## OpenAPI (swagger)
 
@@ -109,13 +99,7 @@ Don't forget to restart your computer or session for the changes to be available
 
 ## Tests + Coverage
 
-Detailed testing guide available in [TESTING.md](./TESTING.md).
-
-- Launch all tests
-
-  ```bash
-  npm run test
-  ```
+`bash npm run test`
 
 ## Developer
 
