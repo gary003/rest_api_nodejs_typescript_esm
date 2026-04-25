@@ -45,7 +45,7 @@ Explore the detailed project documentation:
 ## Description
 
 This repository is a backend REST API portfolio that has a few routes (CRUD) aiming to keep at hand backend development techniques and show off development skills.
-To make things easier for GitHub users, there is no need for a .env file, making it easier to test and deploy for external users who want to try it.
+To make things easier for GitHub users, there is no need for a .env file, making it easy to test and deploy for external users who want to try it.
 
 ## Prerequisites
 
@@ -61,24 +61,26 @@ Link to install and configure docker properly : <https://medium.com/devops-techn
 
 Don't forget to restart your computer or session for the changes to be available on all shells
 
-## Git Installation
+## Installation (git)
+
+In a shell:
 
 - Clone the project
 
   ```bash
-  git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
+    git clone https://github.com/gary003/rest_api_nodejs_typescript_esm.git
   ```
 
 - Go into the project directory
 
   ```bash
-  cd rest_api_nodejs_typescript_esm
+    cd rest_api_nodejs_typescript_esm
   ```
 
 - Install the dependencies
 
   ```bash
-  npm install
+    npm install
   ```
 
 ## Start API
@@ -89,7 +91,7 @@ Don't forget to restart your computer or session for the changes to be available
   In a shell, at the root directory of the project, type:
 
   ```bash
-  npm run start
+    npm run start
   ```
 
 ### On Local Machine
@@ -98,7 +100,7 @@ Don't forget to restart your computer or session for the changes to be available
   In a shell, at the root directory of the project, type
 
   ```bash
-  npm run dev:start
+    npm run dev:start
   ```
 
 ## OpenAPI (swagger)
@@ -114,7 +116,7 @@ Detailed testing guide available in [TESTING.md](./TESTING.md).
 - Launch all tests
 
   ```bash
-  npm run test
+    npm run test
   ```
 
 ## Developer
