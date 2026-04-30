@@ -21,8 +21,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     globalSetup,
-    // This ensures Vitest looks for the right files regardless of ext
     include: ['./tests/**/*.spec.ts', './tests/**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/.git/**'],
     coverage: {
       provider: 'v8',
       include: ['src/v1/**'],
