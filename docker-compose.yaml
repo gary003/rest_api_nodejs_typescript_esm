@@ -79,6 +79,29 @@ services:
     networks:
       - my_db_network
 
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    restart: always
+    ports:
+      - '8978:8978'
+    depends_on:
+      - db
+    networks:
+      - my_db_network
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: always
+    command: -H unix:///var/run/docker.sock --admin-password '$$2a$$10$$BLUpcIhzq2rqW0hOekyehO6TwElkVMYnESoHh7y3/178tFv60P7oS'
+    ports:
+      - '9000:9000'
+      - '9443:9443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - my_app_network
+
   # otel-collector:
   #   image: otel/opentelemetry-collector-contrib:latest
   #   command:
@@ -214,3 +237,4 @@ volumes:
   # grafana_data:
   # tempo_data:
   redis_data:
+  portainer_data:
