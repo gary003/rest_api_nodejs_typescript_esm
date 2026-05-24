@@ -103,11 +103,15 @@ In a shell:
     npm run dev:start
   ```
 
-## OpenAPI (swagger)
+## Available Docker Services
 
-- Copy this url in a browser (adapt the port if needed)
+When you run the project via Docker (`npm run start`), several helpful dashboards and management interfaces are exposed on your local machine:
 
-  url : `http://localhost:8080`
+- **API & Swagger Setup:** `http://localhost:8080`
+- **CloudBeaver (Database Manager):** `http://localhost:8978`
+  - _Tip: Create a new connection using the hostname `db` to inspect your MySQL database._
+- **Portainer (Docker Manager):** `http://localhost:9000`
+  - _Credentials: Username `admin` / Password `admin`_
 
 ## Tests + Coverage
 
