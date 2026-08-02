@@ -1,5 +1,21 @@
 # REST API Node.js - TypeScript
 
+## Table of Contents
+
+- [REST API Node.js - TypeScript](#rest-api-nodejs---typescript)
+  - [Table of Contents](#table-of-contents)
+  - [Skills](#skills)
+  - [Documentation Index](#documentation-index)
+  - [Description](#description)
+  - [Prerequisites](#prerequisites)
+  - [Installation (git)](#installation-git)
+  - [Start API with Docker](#start-api-with-docker)
+  - [Start API on Local Machine](#start-api-on-local-machine)
+  - [Available Docker Services](#available-docker-services)
+  - [Tests + Coverage](#tests--coverage)
+  - [Developer](#developer)
+  - [License](#license)
+
 ## Skills
 
 - Languages: **Node.js v24**, **Typescript v5**, Markdown, JSON
@@ -18,11 +34,11 @@
   - Table join
   - Table lock
   - Transactions (rollback and commit)
-- Observability **Opentelemetry**
+- Observability & Monitoring with **Opentelemetry**
   - Logs with **Promtail** && **Loki**
   - Metrics with **Prometheus**
   - Traces with **Tempo**
-  - Dashboard with **Grafana**
+  - Dashboard with **Grafana**, **CloudBeaver** && **Portainer**
 - Streams
   - Pipeline handling
   - Transformation
@@ -49,10 +65,17 @@ To make things easier for GitHub users, there is no need for a .env file, making
 
 ## Prerequisites
 
-- Having Node.js v24 installed (use nvm if needed)
-- Having git installed
-- Having npm(v6+) & npx installed
-- Having docker(v27+) installed
+**For running via Docker only:**
+
+- Docker (v27+) && docker-compose
+- Git
+
+**For local development, testing, and scripts:**
+
+- Node.js v24 (use nvm if needed)
+- npm (v6+) & npx
+
+**Important Notes:**
 
 !! A docker group must be created, then your user (as a sudoer) must be added to it.
 Otherwise you'll have trouble launching the tests !!
@@ -83,9 +106,7 @@ In a shell:
     npm install
   ```
 
-## Start API
-
-### With Docker
+## Start API with Docker
 
 - Launch the app & DB (mysql)
   In a shell, at the root directory of the project, type:
@@ -94,7 +115,13 @@ In a shell:
     npm run start
   ```
 
-### On Local Machine
+  or
+
+  ```bash
+    docker compose up -d
+  ```
+
+## Start API on Local Machine
 
 - Launch the app & DB (sqlite)
   In a shell, at the root directory of the project, type
